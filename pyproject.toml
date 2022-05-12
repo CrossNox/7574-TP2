@@ -19,6 +19,8 @@ isort = "^5.10.1"
 mypy = "^0.950"
 pre-commit = "^2.19.0"
 flake8 = "^4.0.1"
+kaggle = "^1.5.12"
+pyarrow = "^8.0.0"
 
 [tool.poetry.scripts]
 rma_client = "rma.client.cli:app"
