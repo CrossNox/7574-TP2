@@ -1,0 +1,2 @@
+DEFAULT_PORT: int = 5678
+DEFAULT_HOST: str = "0.0.0.0"
