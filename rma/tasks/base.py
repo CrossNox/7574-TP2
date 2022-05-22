@@ -120,3 +120,21 @@ class Filter(Step, abc.ABC):
     def exec_step(self, msg):
         if self.filter(msg):
             self.sender.send(json.dumps(msg).encode())
+
+
+class NonPreemptibleFilter(Step, abc.ABC):
+    @abc.abstractmethod
+    def send_agg(self):
+        pass
+
+    def run(self):
+        while True:
+            s = self.receiver.recv()
+
+            if s == b"":
+                break
+
+            msg = json.loads(s.decode())
+            self.exec_step(msg)
+        self.send_agg()
+        self.sender.send(b"")
