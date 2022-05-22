@@ -3,6 +3,7 @@ from typing import Dict, Optional
 import typer
 
 from rma.utils import get_logger
+from rma.tasks.filter_null_url import FilterNullUrl
 from rma.tasks.filter_uniq_posts import FilterUniqPosts
 from rma.tasks.filter_ed_comments import FilterEdComment
 from rma.tasks.filter_nan_sentiment import FilterNanSentiment
@@ -12,6 +13,12 @@ logger = get_logger(__name__)
 app = typer.Typer()
 
 state: Dict[str, Optional[str]] = {"addrin": None, "addrout": None}
+
+
+@app.command()
+def null_url():
+    filter_ = FilterNullUrl(state["addrin"], state["addrout"])
+    filter_.run()
 
 
 @app.command()

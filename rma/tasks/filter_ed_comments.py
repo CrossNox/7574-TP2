@@ -9,5 +9,4 @@ logger = get_logger(__name__)
 
 class FilterEdComment(Filter):
     def filter(self, msg):
-        # logger.info(f"{msg=}")
         return re.search(ED_KWDS_PATTERN, msg["body"].lower()) is not None
