@@ -1,8 +1,9 @@
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import typer
 
 from rma.utils import get_logger
+from rma.tasks.filter_columns import FilterColumns
 from rma.tasks.mean_sentiment import MeanSentiment
 from rma.tasks.extract_post_id import ExtractPostID
 
@@ -11,6 +12,12 @@ logger = get_logger(__name__)
 app = typer.Typer()
 
 state: Dict[str, Optional[str]] = {"addrin": None, "addrout": None}
+
+
+@app.command()
+def filter_columns(cols: List[str]):
+    transformer = FilterColumns(cols, state["addrin"], state["addrout"])
+    transformer.run()
 
 
 @app.command()
