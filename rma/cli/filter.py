@@ -7,12 +7,19 @@ from rma.tasks.filter_null_url import FilterNullUrl
 from rma.tasks.filter_uniq_posts import FilterUniqPosts
 from rma.tasks.filter_ed_comments import FilterEdComment
 from rma.tasks.filter_nan_sentiment import FilterNanSentiment
+from rma.task.filter_above_score import FilterPostsScoreAboveMean
 
 logger = get_logger(__name__)
 
 app = typer.Typer()
 
 state: Dict[str, Optional[str]] = {"addrin": None, "addrout": None}
+
+
+@app.command()
+def posts_score_above_mean():
+    filter_ = FilterPostsScoreAboveMean(state["addrin"], state["addrout"])
+    filter_.run()
 
 
 @app.command()
