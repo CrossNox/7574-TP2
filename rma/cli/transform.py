@@ -3,6 +3,7 @@ from typing import Dict, Optional
 import typer
 
 from rma.utils import get_logger
+from rma.tasks.mean_sentiment import MeanSentiment
 from rma.tasks.extract_post_id import ExtractPostID
 
 logger = get_logger(__name__)
@@ -10,6 +11,12 @@ logger = get_logger(__name__)
 app = typer.Typer()
 
 state: Dict[str, Optional[str]] = {"addrin": None, "addrout": None}
+
+
+@app.command()
+def mean_sentiment():
+    transformer = MeanSentiment(state["addrin"], state["addrout"])
+    transformer.run()
 
 
 @app.command()

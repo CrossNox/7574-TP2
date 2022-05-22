@@ -91,6 +91,27 @@ class Transform(Step, abc.ABC):
         self.sender.send(json.dumps(msg).encode())
 
 
+class NonPreemptibleTransform(Transform, abc.ABC):
+    def exec_step(self, msg):
+        self.transform(msg)
+
+    @abc.abstractmethod
+    def agg(self):
+        pass
+
+    def run(self):
+        while True:
+            s = self.receiver.recv()
+
+            if s == b"":
+                break
+
+            msg = json.loads(s.decode())
+            self.exec_step(msg)
+        self.sender.send(json.dumps(self.agg).encode())
+        self.sender.send(b"")
+
+
 class Filter(Step, abc.ABC):
     @abc.abstractmethod
     def filter(self, msg):
