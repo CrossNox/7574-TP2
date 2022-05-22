@@ -3,6 +3,7 @@ from typing import Dict, List, Optional
 import typer
 
 from rma.utils import get_logger
+from rma.tasks.score_mean import PostsScoreMean
 from rma.tasks.filter_columns import FilterColumns
 from rma.tasks.mean_sentiment import MeanSentiment
 from rma.tasks.extract_post_id import ExtractPostID
@@ -12,6 +13,12 @@ logger = get_logger(__name__)
 app = typer.Typer()
 
 state: Dict[str, Optional[str]] = {"addrin": None, "addrout": None}
+
+
+@app.command()
+def score_mean(cols: List[str]):
+    transformer = PostsScoreMean(cols, state["addrin"], state["addrout"])
+    transformer.run()
 
 
 @app.command()

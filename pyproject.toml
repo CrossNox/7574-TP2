@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rma"
-version = "0.8.0"
+version = "0.9.0"
 description = "Reddit Memes Analyzer, for fun (and passing Distribuidos I)."
 authors = ["CrossNox <ijmermet@gmail.com>"]
 
