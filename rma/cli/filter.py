@@ -4,12 +4,19 @@ import typer
 
 from rma.utils import get_logger
 from rma.tasks.filter_ed_comments import FilterEdComment
+from rma.tasks.filter_nan_sentiment import FilterNanSentiment
 
 logger = get_logger(__name__)
 
 app = typer.Typer()
 
 state: Dict[str, Optional[str]] = {"addrin": None, "addrout": None}
+
+
+@app.command()
+def nan_sentiment():
+    filter_ = FilterNanSentiment(state["addrin"], state["addrout"])
+    filter_.run()
 
 
 @app.command()
