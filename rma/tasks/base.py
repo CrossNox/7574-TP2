@@ -242,7 +242,6 @@ class Worker:
             _sub = zmq.Context.instance().socket(zmq.SUB)
             _sub.connect(dep_sub)
             _sub.setsockopt_string(zmq.SUBSCRIBE, "")
-
             _subs[dep_name] = _sub
 
             _dep_sync = zmq.Context.instance().socket(zmq.REQ)
@@ -262,6 +261,66 @@ class Worker:
         self.req.send(b"")
         self.req.recv()
 
+        logger.info("Worker :: Syncing with all subs")
+        subs = 0
+        while subs < self.nsubs:
+            _ = self.syncsubs.recv()
+            self.syncsubs.send(b"")
+            subs += 1
+            logger.info(f"Worker :: +1 subscriber ({subs}/{self.nsubs})")
+
+        logger.info("Worker :: Running executor")
+        self.executor.run()
+
+        logger.info("Worker :: Sending poison pill")
+        self.pub.send(b"")
+
+        logger.info("Worker :: Exiting")
+
+
+class Joiner:
+    # Yes, this is so close to a worker
+    # Just changes the merging of subs
+    # TODO: merge these two things
+    def __init__(
+        self,
+        pubaddr,
+        subsyncaddr,
+        nsubs: int,
+        inputs: List[Tuple[str, str]],
+        executor_cls,
+        executor_kwargs=None,
+    ):
+        self.context = zmq.Context.instance()  # type: ignore
+
+        # PUB to publish joined data to
+        self.pub = self.context.socket(zmq.PUB)
+        self.pub.bind(pubaddr)
+
+        # REP to sync with subscribers
+        self.syncsubs = self.context.socket(zmq.REP)
+        self.syncsubs.bind(subsyncaddr)
+        self.nsubs = nsubs
+
+        # Subscriptions
+        self.sub = self.context.socket(zmq.SUB)
+        self.sub.setsockopt_string(zmq.SUBSCRIBE, "")
+
+        for dep_sync, dep_sub in inputs:
+            self.sub.connect(dep_sub)
+
+            _dep_sync = self.context.socket(zmq.REQ)
+            _dep_sync.connect(dep_sync)
+            _dep_sync.send(b"")
+            _dep_sync.recv()
+
+        if executor_kwargs is None:
+            executor_kwargs = dict()
+        self.executor = executor_cls(
+            task_in=self.sub, task_out=self.pub, **executor_kwargs
+        )
+
+    def run(self):
         logger.info("Worker :: Syncing with all subs")
         subs = 0
         while subs < self.nsubs:
