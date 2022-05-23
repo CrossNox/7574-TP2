@@ -44,8 +44,7 @@ class Source(abc.ABC):
             self.sender.send(json.dumps(thing).encode())
 
         logger.info("Source :: Sending poison pill")
-        for _ in range(self.nsubs):
-            self.sender.send(b"")
+        self.sender.send(b"")
 
 
 class CSVSource(Source):

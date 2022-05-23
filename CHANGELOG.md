@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Single worker executor with dependencies
 - DAG tests
+- Sink to file
 
 ## [1.0.0] - 2022-05-23
 ### Changed
