@@ -26,4 +26,3 @@ class Executor(abc.ABC):
             self.handle_msg(msg)
 
         self.final_stmt()
-        self.task_out.send(b"")

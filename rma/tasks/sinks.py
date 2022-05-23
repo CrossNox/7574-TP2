@@ -17,7 +17,7 @@ class Sink(abc.ABC):
         self.receiver.connect(addrin)
         self.receiver.setsockopt_string(zmq.SUBSCRIBE, "")
 
-        # REP to sync with ventilator sink
+        # REQ to sync with ventilator sink
         self.syncclient = self.context.socket(zmq.REQ)
         self.syncclient.connect(syncaddr)
 
