@@ -16,7 +16,7 @@ socket_rep.recv()
 socket_rep.send(b"")
 
 
-for i in range(100, 1, -1):
+for i in range(50, 150):
     msg = {"pub_2": i, "val": i}
     socket_pub.send_string(json.dumps(msg))
 
