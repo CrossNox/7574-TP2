@@ -1,0 +1,61 @@
+import re
+import json
+from typing import List
+from collections import defaultdict
+
+from rma.tasks.executor import Executor
+
+
+class ExtractPostID(Executor):
+    def handle_msg(self, msg):
+        msg["post_id"] = re.match(
+            r"https://old.reddit.com/r/me_?irl/comments/([^/]+)/.*", msg["permalink"]
+        ).groups()[0]
+        del msg["permalink"]
+        self.task_out.send(json.dumps(msg).encode())
+
+    def final_stmt(self):
+        pass
+
+
+class MeanSentiment(Executor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sentiment_scores = defaultdict(lambda x: {"count": 0, "sum": 0})
+
+    def handle_msg(self, msg):
+        post_id = msg["post_id"]
+        self.sentiment_scores[post_id]["count"] += 1
+        self.sentiment_scores[post_id]["sum"] += msg["sentiment"]
+
+    def final_stmt(self):
+        retval = {k: v["sum"] / v["count"] for k, v in self.sentiment_scores.items()}
+        self.task_out.send(json.dumps(retval).encode())
+
+
+class PostsScoreMean(Executor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sentiment_scores = defaultdict(lambda x: {"count": 0, "sum": 0})
+
+    def handle_msg(self, msg):
+        post_id = msg["post_id"]
+        self.sentiment_scores[post_id]["count"] += 1
+        self.sentiment_scores[post_id]["sum"] += msg["score"]
+
+    def final_stmt(self):
+        retval = {k: v["sum"] / v["count"] for k, v in self.sentiment_scores.items()}
+        self.task_out.send(json.dumps(retval).encode())
+
+
+class FilterColumn(Executor):
+    def __init__(self, columns: List[str], *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.columns = set(columns)
+
+    def handle_msg(self, msg):
+        msg = {k: v for k, v in msg.items() if k in self.columns}
+        self.task_out.send(json.dumps(msg).encode())
+
+    def final_stmt(self):
+        pass
