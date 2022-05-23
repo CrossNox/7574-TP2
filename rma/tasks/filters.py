@@ -8,10 +8,10 @@ from rma.constants import ED_KWDS_PATTERN
 class FilterPostsScoreAboveMean(Executor):
     def __init__(self, mean, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.mean = mean
+        self.mean = int(mean)
 
     def handle_msg(self, msg):
-        if msg["score"] >= self.mean:
+        if int(msg["score"]) >= self.mean:
             self.task_out.send(json.dumps(msg).encode())
 
     def final_stmt(self):

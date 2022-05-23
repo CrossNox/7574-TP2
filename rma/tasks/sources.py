@@ -23,24 +23,27 @@ class Source(abc.ABC):
 
         self.nsubs = nsubs
 
-        logger.info("Source dumping into %s", addrout)
-        logger.info("Source sync addr %s", addrsync)
+        logger.info("Source :: dumping into %s", addrout)
+        logger.info("Source :: sync addr %s", addrsync)
 
     @abc.abstractmethod
     def gen(self):
         pass
 
     def run(self):
+        logger.info("Source :: syncing with subs")
         subs = 0
         while subs < self.nsubs:
             _ = self.syncservice.recv()
             self.syncservice.send(b"")
             subs += 1
-            logger.info(f"+1 subscriber ({subs}/{self.nsubs})")
+            logger.info(f"Source :: +1 subscriber ({subs}/{self.nsubs})")
 
+        logger.info("Source: generating")
         for thing in self.gen():
             self.sender.send(json.dumps(thing).encode())
-        logger.info("Sending poison pill")
+
+        logger.info("Source :: Sending poison pill")
         self.sender.send(b"")
 
 

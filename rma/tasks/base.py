@@ -1,3 +1,6 @@
+import json
+from typing import List, Tuple
+
 import zmq
 
 from rma.utils import get_logger
@@ -173,3 +176,104 @@ class VentilatorWorker:
         self.source_req.send(b"")
         self.source_req.recv()
         self.executor.run()
+        self.push.send(b"")
+
+
+class Worker:
+    def __init__(
+        self,
+        subaddr,
+        reqaddr,
+        pubaddr,
+        subsyncaddr,
+        nsubs: int,
+        executor_cls,
+        subfilter="",
+        executor_kwargs=None,
+        deps: List[Tuple[str, str, str]] = None,
+    ):
+        self.context = zmq.Context.instance()  # type: ignore
+
+        # SUB where to get data from
+        self.sub = self.context.socket(zmq.SUB)
+        self.sub.connect(subaddr)
+        self.sub.setsockopt_string(zmq.SUBSCRIBE, subfilter)
+
+        # REQ to sync with producer
+        self.req = self.context.socket(zmq.REQ)
+        self.req.connect(reqaddr)
+
+        # PUB to publish transformed data to
+        self.pub = self.context.socket(zmq.PUB)
+        self.pub.bind(pubaddr)
+
+        # REP to sync with subscribers
+        self.syncsubs = self.context.socket(zmq.REP)
+        self.syncsubs.bind(subsyncaddr)
+
+        self.nsubs = nsubs
+
+        if deps is None:
+            deps = []
+
+        self.deps = self._resolve_deps(deps)
+
+        # Thingy to execute
+        if executor_kwargs is None:
+            executor_kwargs = dict()
+        self.executor = executor_cls(
+            **self.deps, task_in=self.sub, task_out=self.pub, **executor_kwargs
+        )
+
+        logger.info("Worker :: subbed to %s with filter '%s'", subaddr, subfilter)
+        logger.info("Worker :: sync with producer at %s", reqaddr)
+        logger.info("Worker :: publishing at %s", pubaddr)
+        logger.info("Worker :: sync with %s clients at address %s", nsubs, subsyncaddr)
+
+    def _resolve_deps(self, deps):
+        logger.info("Worker :: resolving deps")
+
+        final_deps = {}
+        _subs = {}
+
+        for dep_name, dep_sync, dep_sub in deps:
+            logger.info("%s result: %s sub: %s", dep_name, dep_sync, dep_sub)
+
+            _sub = zmq.Context.instance().socket(zmq.SUB)
+            _sub.connect(dep_sub)
+            _sub.setsockopt_string(zmq.SUBSCRIBE, "")
+
+            _subs[dep_name] = _sub
+
+            _dep_sync = zmq.Context.instance().socket(zmq.REQ)
+            _dep_sync.connect(dep_sync)
+            _dep_sync.send(b"")
+            _dep_sync.recv()
+
+        logger.info("Worker :: Waiting for dependencies results")
+
+        for dep_name, sub in _subs.items():
+            final_deps[dep_name] = json.loads(sub.recv().decode())
+
+        return final_deps
+
+    def run(self):
+        logger.info("Worker :: Syncing with producer")
+        self.req.send(b"")
+        self.req.recv()
+
+        logger.info("Worker :: Syncing with all subs")
+        subs = 0
+        while subs < self.nsubs:
+            _ = self.syncsubs.recv()
+            self.syncsubs.send(b"")
+            subs += 1
+            logger.info(f"Worker :: +1 subscriber ({subs}/{self.nsubs})")
+
+        logger.info("Worker :: Running executor")
+        self.executor.run()
+
+        logger.info("Worker :: Sending poison pill")
+        self.pub.send(b"")
+
+        logger.info("Worker :: Exiting")
