@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.0] - 2022-05-23
 ### Added
 - Single worker executor with dependencies
+- DAG tests
 
 ## [1.0.0] - 2022-05-23
 ### Changed
