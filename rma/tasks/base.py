@@ -7,7 +7,14 @@ logger = get_logger(__name__)
 
 class VentilatorSource:
     def __init__(
-        self, subaddr, pushaddr, syncaddr, sinkaddr, nsubs: int, subfilter: str = "",
+        self,
+        subaddr,
+        subsyncaddr,
+        pushaddr,
+        syncaddr,
+        sinkaddr,
+        nworkers: int,
+        subfilter: str = "",
     ):
         self.context = zmq.Context.instance()  # type: ignore
 
@@ -15,6 +22,10 @@ class VentilatorSource:
         self.sub = self.context.socket(zmq.SUB)
         self.sub.connect(subaddr)
         self.sub.setsockopt_string(zmq.SUBSCRIBE, subfilter)
+
+        # SUB sync
+        self.subsync = self.context.socket(zmq.REQ)
+        self.subsync.connect(subsyncaddr)
 
         # PUSH where to publish data
         self.push = self.context.socket(zmq.PUSH)
@@ -25,22 +36,34 @@ class VentilatorSource:
         self.sync_rep.bind(syncaddr)
 
         # Number of workers to coordinate
-        self.nsubs = nsubs
+        self.nworkers = nworkers
 
         # REQ to sync with sink
         self.sink_req = self.context.socket(zmq.REQ)
         self.sink_req.connect(sinkaddr)
 
+        logger.info("Ventilate source subscribed to %s", subaddr)
+        logger.info("Ventilate syncing to %s", subsyncaddr)
+        logger.info("Ventilate source pushing to %s", pushaddr)
+        logger.info("Ventilate sync addr %s", syncaddr)
+        logger.info("Ventilate looking for sink %s", sinkaddr)
+
     def run(self):
+        logger.info("Syncing with sink")
         self.sink_req.send(b"")
         self.sink_req.recv()
 
+        logger.info("Syncing with all workers")
         subs = 0
-        while subs < self.nsubs:
+        while subs < self.nworkers:
             _ = self.sync_rep.recv()
             self.sync_rep.send(b"")
             subs += 1
-            logger.info(f"+1 subscriber ({subs}/{self.nsubs})")
+            logger.info(f"+1 subscriber ({subs}/{self.nworkers})")
+
+        logger.info("Syncing with pub")
+        self.subsync.send(b"")
+        self.subsync.recv()
 
         while True:
             s = self.sub.recv()
@@ -50,9 +73,14 @@ class VentilatorSource:
 
             self.push.send(s)
 
+        for _ in range(self.nworkers):
+            self.push.send(b"")
+
 
 class VentilatorSink:
-    def __init__(self, pulladdr, repaddr, pubaddr, nworkers: int):
+    def __init__(
+        self, pulladdr, repaddr, pubaddr, nworkers: int, nsubs: int, subsyncaddr
+    ):
         self.context = zmq.Context.instance()  # type: ignore
 
         # PULL where to get workers results
@@ -67,12 +95,32 @@ class VentilatorSink:
         self.pub = self.context.socket(zmq.PUB)
         self.pub.bind(pubaddr)
 
+        # REP to sync subs
+        self.syncsubs = self.context.socket(zmq.REP)
+        self.syncsubs.bind(subsyncaddr)
+
+        self.nsubs = nsubs
+
         # Number of workers to keep track of exits
         self.nworkers = nworkers
 
+        logger.info("Ventilate sink :: pulling from %s", pulladdr)
+        logger.info("Ventilate sink :: source sync at %s", repaddr)
+        logger.info("Ventilate sink :: publishing at %s", pubaddr)
+        logger.info("Ventilate sink :: syncing %s at address %s", nsubs, subsyncaddr)
+
     def run(self):
+        logger.info("Syncing with source")
         self.source_rep.recv()
         self.source_rep.send(b"")
+
+        logger.info("Syncing with all subs")
+        subs = 0
+        while subs < self.nsubs:
+            _ = self.syncsubs.recv()
+            self.syncsubs.send(b"")
+            subs += 1
+            logger.info(f"+1 subscriber ({subs}/{self.nworkers})")
 
         while True:
             s = self.workers_results.recv()
@@ -95,13 +143,12 @@ class VentilatorWorker:
         pushaddr,
         executor_cls,
         executor_kwargs=None,
-        context=None,
     ):
-        self.context = context or zmq.Context()
+        self.context = zmq.Context.instance()
 
         # PULL address to get message from
         self.task_pull = self.context.socket(zmq.PULL)
-        self.task_pull.bind(pulladdr)
+        self.task_pull.connect(pulladdr)
 
         # Source sync
         self.source_req = self.context.socket(zmq.REQ)
@@ -118,5 +165,11 @@ class VentilatorWorker:
             task_in=self.task_pull, task_out=self.push, **executor_kwargs
         )
 
+        logger.info("Worker pulling from %s", pulladdr)
+        logger.info("Worker synced to %s", reqaddr)
+        logger.info("Worker pushing to %s", pushaddr)
+
     def run(self):
+        self.source_req.send(b"")
+        self.source_req.recv()
         self.executor.run()

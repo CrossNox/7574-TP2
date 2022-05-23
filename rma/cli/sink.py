@@ -3,7 +3,7 @@ from typing import Dict
 import typer
 
 from rma.utils import get_logger
-from rma.tasks.print_sink import PrintSink
+from rma.tasks.sinks import PrintSink
 
 logger = get_logger(__name__)
 

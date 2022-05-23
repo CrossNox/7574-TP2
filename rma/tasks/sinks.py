@@ -9,13 +9,15 @@ logger = get_logger(__name__)
 
 
 class Sink(abc.ABC):
-    def __init__(self, addrin, syncaddr, context=None):
-        self.context = context or zmq.Context()
+    def __init__(self, addrin, syncaddr):
+        self.context = zmq.Context.instance()
 
+        # SUB to receive data
         self.receiver = self.context.socket(zmq.SUB)
         self.receiver.connect(addrin)
         self.receiver.setsockopt_string(zmq.SUBSCRIBE, "")
 
+        # REP to sync with ventilator sink
         self.syncclient = self.context.socket(zmq.REQ)
         self.syncclient.connect(syncaddr)
 

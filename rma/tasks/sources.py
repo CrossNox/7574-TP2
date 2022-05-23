@@ -13,13 +13,18 @@ class Source(abc.ABC):
     def __init__(self, addrout, addrsync, nsubs: int):
         self.context = zmq.Context.instance()  # type: ignore
 
+        # PUB to publish data
         self.sender = self.context.socket(zmq.PUB)
         self.sender.bind(addrout)
 
+        # REP to sync with all subscribers
         self.syncservice = self.context.socket(zmq.REP)
         self.syncservice.bind(addrsync)
 
         self.nsubs = nsubs
+
+        logger.info("Source dumping into %s", addrout)
+        logger.info("Source sync addr %s", addrsync)
 
     @abc.abstractmethod
     def gen(self):

@@ -1,48 +1,32 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Union
 
 import typer
 
 from rma.utils import get_logger
-from rma.tasks.score_mean import PostsScoreMean
-from rma.tasks.filter_columns import FilterColumns
-from rma.tasks.mean_sentiment import MeanSentiment
-from rma.tasks.extract_post_id import ExtractPostID
+from rma.tasks.base import VentilatorWorker
+from rma.tasks.transforms import FilterColumn
 
 logger = get_logger(__name__)
 
 app = typer.Typer()
 
-state: Dict[str, Optional[str]] = {"addrin": None, "addrout": None}
+state: Dict[str, Union[str, int]] = {}
 
 
 @app.command()
-def score_mean(cols: List[str]):
-    transformer = PostsScoreMean(cols, state["addrin"], state["addrout"])
-    transformer.run()
-
-
-@app.command()
-def filter_columns(cols: List[str]):
-    transformer = FilterColumns(cols, state["addrin"], state["addrout"])
-    transformer.run()
-
-
-@app.command()
-def mean_sentiment():
-    transformer = MeanSentiment(state["addrin"], state["addrout"])
-    transformer.run()
-
-
-@app.command()
-def extract_post_id():
-    transformer = ExtractPostID(state["addrin"], state["addrout"])
-    transformer.run()
+def filter_columns(columns: List[str]):
+    worker = VentilatorWorker(
+        **state, executor_cls=FilterColumn, executor_kwargs={"columns": columns}
+    )
+    worker.run()
 
 
 @app.callback()
 def main(
-    addrin: str = typer.Argument(..., help="The address to read from"),
-    addrout: str = typer.Argument(..., help="The address to dump into"),
+    pulladdr: str = typer.Argument(..., help="The address to pull data from"),
+    reqaddr: str = typer.Argument(..., help="The address to ack the ventilator"),
+    pushaddr: str = typer.Argument(..., help="The address to push data to"),
 ):
-    state["addrin"] = addrin
-    state["addrout"] = addrout
+    state["pulladdr"] = pulladdr
+    state["reqaddr"] = reqaddr
+    state["pushaddr"] = pushaddr
