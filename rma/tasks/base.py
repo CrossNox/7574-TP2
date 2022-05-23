@@ -213,6 +213,9 @@ class Worker:
 
         self.nsubs = nsubs
 
+        if deps is None:
+            deps = []
+
         self.deps = self._resolve_deps(deps)
 
         # Thingy to execute
@@ -228,6 +231,7 @@ class Worker:
         logger.info("Worker :: sync with %s clients at address %s", nsubs, subsyncaddr)
 
     def _resolve_deps(self, deps):
+        logger.info("Worker :: resolving deps")
         final_deps = {}
 
         for dep_name, dep_sync, dep_sub in deps:
@@ -240,19 +244,23 @@ class Worker:
         return final_deps
 
     def run(self):
-        logger.info("Syncing with producer")
+        logger.info("Worker :: Syncing with producer")
         self.req.send(b"")
         self.req.recv()
 
-        logger.info("Syncing with all subs")
+        logger.info("Worker :: Syncing with all subs")
         subs = 0
         while subs < self.nsubs:
             _ = self.syncsubs.recv()
             self.syncsubs.send(b"")
             subs += 1
-            logger.info(f"+1 subscriber ({subs}/{self.nsubs})")
+            logger.info(f"Worker :: +1 subscriber ({subs}/{self.nsubs})")
 
+        logger.info("Worker :: Running executor")
         self.executor.run()
 
+        logger.info("Worker :: Sending poison pill")
         for _ in range(self.nsubs):
             self.pub.send(b"")
+
+        logger.info("Worker :: Exiting")
