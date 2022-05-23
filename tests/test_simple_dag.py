@@ -8,10 +8,10 @@ import pytest
 from pkg_resources import resource_filename
 
 from rma.tasks.base import Worker
+from rma.tasks.sinks import FileSink
 from rma.utils import config_logging
 from rma.tasks.sources import CSVSource
 from rma.tasks.transforms import FilterColumn
-from rma.tasks.sinks import FileSink, PrintSink
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def comments_source():
 
 
 @pytest.fixture
-def filter_cols():
+def filter_comments_cols():
     def _run():
         thing = Worker(
             subaddr="tcp://localhost:5550",
@@ -58,29 +58,19 @@ def file_sink():
     return tmp_out.name, mp.Process(target=_run)
 
 
-@pytest.fixture
-def print_sink():
-    def _run():
-        sink = PrintSink(addrin="tcp://localhost:5552", syncaddr="tcp://localhost:5553")
-        sink.run()
-
-    return mp.Process(target=_run)
-
-
-def setup_function(function):
-    print("setting up", function)
+def setup_function(_function):
     config_logging(1, False)
 
 
-def test_dag_1(comments_source, filter_cols, file_sink):
+def test_dag_1(comments_source, filter_comments_cols, file_sink):
     out_file, file_sink_p = file_sink
 
     comments_source.start()
-    filter_cols.start()
+    filter_comments_cols.start()
     file_sink_p.start()
 
     comments_source.join()
-    filter_cols.join()
+    filter_comments_cols.join()
     file_sink_p.join()
 
     messages = []

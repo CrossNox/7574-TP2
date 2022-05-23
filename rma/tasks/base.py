@@ -232,14 +232,28 @@ class Worker:
 
     def _resolve_deps(self, deps):
         logger.info("Worker :: resolving deps")
+
         final_deps = {}
+        _subs = {}
 
         for dep_name, dep_sync, dep_sub in deps:
-            dep_sync.send(b"")
-            dep_sync.recv()
+            logger.info("%s result: %s sub: %s", dep_name, dep_sync, dep_sub)
 
-        for dep_name, dep_sync, dep_sub in deps:
-            final_deps[dep_name] = json.loads(dep_sub.recv().decode())
+            _sub = zmq.Context.instance().socket(zmq.SUB)
+            _sub.connect(dep_sub)
+            _sub.setsockopt_string(zmq.SUBSCRIBE, "")
+
+            _subs[dep_name] = _sub
+
+            _dep_sync = zmq.Context.instance().socket(zmq.REQ)
+            _dep_sync.connect(dep_sync)
+            _dep_sync.send(b"")
+            _dep_sync.recv()
+
+        logger.info("Worker :: Waiting for dependencies results")
+
+        for dep_name, sub in _subs.items():
+            final_deps[dep_name] = json.loads(sub.recv().decode())
 
         return final_deps
 
@@ -260,7 +274,6 @@ class Worker:
         self.executor.run()
 
         logger.info("Worker :: Sending poison pill")
-        for _ in range(self.nsubs):
-            self.pub.send(b"")
+        self.pub.send(b"")
 
         logger.info("Worker :: Exiting")
