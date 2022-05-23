@@ -1,6 +1,3 @@
-import abc
-import json
-
 import zmq
 
 from rma.utils import get_logger
@@ -8,133 +5,171 @@ from rma.utils import get_logger
 logger = get_logger(__name__)
 
 
-class Task(abc.ABC):
-    @abc.abstractmethod
+class VentilatorSource:
+    def __init__(
+        self,
+        subaddr,
+        subsyncaddr,
+        pushaddr,
+        syncaddr,
+        sinkaddr,
+        nworkers: int,
+        subfilter: str = "",
+    ):
+        self.context = zmq.Context.instance()  # type: ignore
+
+        # SUB where to get data from
+        self.sub = self.context.socket(zmq.SUB)
+        self.sub.connect(subaddr)
+        self.sub.setsockopt_string(zmq.SUBSCRIBE, subfilter)
+
+        # SUB sync
+        self.subsync = self.context.socket(zmq.REQ)
+        self.subsync.connect(subsyncaddr)
+
+        # PUSH where to publish data
+        self.push = self.context.socket(zmq.PUSH)
+        self.push.bind(pushaddr)
+
+        # REP to sync workers
+        self.sync_rep = self.context.socket(zmq.REP)
+        self.sync_rep.bind(syncaddr)
+
+        # Number of workers to coordinate
+        self.nworkers = nworkers
+
+        # REQ to sync with sink
+        self.sink_req = self.context.socket(zmq.REQ)
+        self.sink_req.connect(sinkaddr)
+
+        logger.info("Ventilate source subscribed to %s", subaddr)
+        logger.info("Ventilate syncing to %s", subsyncaddr)
+        logger.info("Ventilate source pushing to %s", pushaddr)
+        logger.info("Ventilate sync addr %s", syncaddr)
+        logger.info("Ventilate looking for sink %s", sinkaddr)
+
     def run(self):
-        pass
+        logger.info("Syncing with sink")
+        self.sink_req.send(b"")
+        self.sink_req.recv()
 
+        logger.info("Syncing with all workers")
+        subs = 0
+        while subs < self.nworkers:
+            _ = self.sync_rep.recv()
+            self.sync_rep.send(b"")
+            subs += 1
+            logger.info(f"+1 subscriber ({subs}/{self.nworkers})")
 
-class Source(Task, abc.ABC):
-    def __init__(self, addrout, context=None):
-        logger.info(f"{addrout=}")
-        self.context = context or zmq.Context()
+        logger.info("Syncing with pub")
+        self.subsync.send(b"")
+        self.subsync.recv()
 
-        self.sender = self.context.socket(zmq.PUSH)
-        self.sender.bind(addrout)
-
-    @abc.abstractmethod
-    def gen(self):
-        pass
-
-    def run(self):
-        for thing in self.gen():
-            self.sender.send(json.dumps(thing).encode())
-        logger.info("Sending poison pill")
-        self.sender.send(b"")
-
-
-class Sink(Task, abc.ABC):
-    def __init__(self, addrin, context=None):
-        self.context = context or zmq.Context()
-
-        self.receiver = self.context.socket(zmq.PULL)
-        self.receiver.bind(addrin)
-
-    @abc.abstractmethod
-    def sink(self, msg):
-        pass
-
-    def run(self):
         while True:
-            s = self.receiver.recv()
+            s = self.sub.recv()
 
             if s == b"":
                 break
 
-            msg = json.loads(s.decode())
-            self.sink(msg)
+            self.push.send(s)
+
+        for _ in range(self.nworkers):
+            self.push.send(b"")
 
 
-class Step(Task, abc.ABC):
-    def __init__(self, addrin, addrout, context=None):
-        self.context = context or zmq.Context()
+class VentilatorSink:
+    def __init__(
+        self, pulladdr, repaddr, pubaddr, nworkers: int, nsubs: int, subsyncaddr
+    ):
+        self.context = zmq.Context.instance()  # type: ignore
 
-        self.receiver = self.context.socket(zmq.PULL)
-        self.receiver.connect(addrin)
+        # PULL where to get workers results
+        self.workers_results = self.context.socket(zmq.PULL)
+        self.workers_results.bind(pulladdr)
 
-        self.sender = self.context.socket(zmq.PUSH)
-        self.sender.connect(addrout)
+        # REP to sync with source
+        self.source_rep = self.context.socket(zmq.REP)
+        self.source_rep.bind(repaddr)
 
-    @abc.abstractmethod
-    def exec_step(self, msg):
-        pass
+        # PUB where to publish results
+        self.pub = self.context.socket(zmq.PUB)
+        self.pub.bind(pubaddr)
 
-    def run(self):
-        while True:
-            s = self.receiver.recv()
+        # REP to sync subs
+        self.syncsubs = self.context.socket(zmq.REP)
+        self.syncsubs.bind(subsyncaddr)
 
-            if s == b"":
-                break
+        self.nsubs = nsubs
 
-            msg = json.loads(s.decode())
-            self.exec_step(msg)
-        self.sender.send(b"")
+        # Number of workers to keep track of exits
+        self.nworkers = nworkers
 
-
-class Transform(Step, abc.ABC):
-    @abc.abstractmethod
-    def transform(self, msg):
-        pass
-
-    def exec_step(self, msg):
-        msg = self.transform(msg)
-        self.sender.send(json.dumps(msg).encode())
-
-
-class NonPreemptibleTransform(Transform, abc.ABC):
-    def exec_step(self, msg):
-        self.transform(msg)
-
-    @abc.abstractmethod
-    def agg(self):
-        pass
+        logger.info("Ventilate sink :: pulling from %s", pulladdr)
+        logger.info("Ventilate sink :: source sync at %s", repaddr)
+        logger.info("Ventilate sink :: publishing at %s", pubaddr)
+        logger.info("Ventilate sink :: syncing %s at address %s", nsubs, subsyncaddr)
 
     def run(self):
+        logger.info("Syncing with source")
+        self.source_rep.recv()
+        self.source_rep.send(b"")
+
+        logger.info("Syncing with all subs")
+        subs = 0
+        while subs < self.nsubs:
+            _ = self.syncsubs.recv()
+            self.syncsubs.send(b"")
+            subs += 1
+            logger.info(f"+1 subscriber ({subs}/{self.nworkers})")
+
         while True:
-            s = self.receiver.recv()
+            s = self.workers_results.recv()
 
             if s == b"":
-                break
+                self.nworkers -= 1
 
-            msg = json.loads(s.decode())
-            self.exec_step(msg)
-        self.sender.send(json.dumps(self.agg).encode())
-        self.sender.send(b"")
+                if self.nworkers == 0:
+                    self.pub.send(b"")
+                    break
 
-
-class Filter(Step, abc.ABC):
-    @abc.abstractmethod
-    def filter(self, msg):
-        pass
-
-    def exec_step(self, msg):
-        if self.filter(msg):
-            self.sender.send(json.dumps(msg).encode())
+            self.pub.send(s)
 
 
-class NonPreemptibleFilter(Step, abc.ABC):
-    @abc.abstractmethod
-    def send_agg(self):
-        pass
+class VentilatorWorker:
+    def __init__(
+        self,
+        pulladdr,
+        reqaddr,
+        pushaddr,
+        executor_cls,
+        executor_kwargs=None,
+    ):
+        self.context = zmq.Context.instance()
+
+        # PULL address to get message from
+        self.task_pull = self.context.socket(zmq.PULL)
+        self.task_pull.connect(pulladdr)
+
+        # Source sync
+        self.source_req = self.context.socket(zmq.REQ)
+        self.source_req.connect(reqaddr)
+
+        # PUSH addr
+        self.push = self.context.socket(zmq.PUSH)
+        self.push.connect(pushaddr)
+
+        # Thingy to execute
+        if executor_kwargs is None:
+            executor_kwargs = dict()
+        self.executor = executor_cls(
+            task_in=self.task_pull, task_out=self.push, **executor_kwargs
+        )
+
+        logger.info("Worker pulling from %s", pulladdr)
+        logger.info("Worker synced to %s", reqaddr)
+        logger.info("Worker pushing to %s", pushaddr)
 
     def run(self):
-        while True:
-            s = self.receiver.recv()
-
-            if s == b"":
-                break
-
-            msg = json.loads(s.decode())
-            self.exec_step(msg)
-        self.send_agg()
-        self.sender.send(b"")
+        self.source_req.send(b"")
+        self.source_req.recv()
+        self.executor.run()

@@ -6,6 +6,7 @@ from rma.cli.sink import app as sink_app
 from rma.cli.filter import app as filter_app
 from rma.cli.source import app as source_app
 from rma.cli.transform import app as transform_app
+from rma.cli.ventilate import app as ventilate_app
 from rma.utils import DEFAULT_PRETTY, DEFAULT_VERBOSE, get_logger, config_logging
 
 logger = get_logger(__name__)
@@ -15,6 +16,7 @@ app.add_typer(filter_app, name="filter")
 app.add_typer(sink_app, name="sink")
 app.add_typer(source_app, name="source")
 app.add_typer(transform_app, name="transform")
+app.add_typer(ventilate_app, name="ventilate")
 
 CFG: Dict[str, Any] = {}
 

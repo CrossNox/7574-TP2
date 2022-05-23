@@ -1,55 +1,30 @@
-from typing import Dict, Optional
+from typing import Dict, Union
 
 import typer
 
 from rma.utils import get_logger
-from rma.tasks.filter_null_url import FilterNullUrl
-from rma.tasks.filter_uniq_posts import FilterUniqPosts
-from rma.tasks.filter_ed_comments import FilterEdComment
-from rma.tasks.filter_nan_sentiment import FilterNanSentiment
-from rma.task.filter_above_score import FilterPostsScoreAboveMean
+from rma.tasks.base import VentilatorWorker
+from rma.tasks.filters import FilterEdComment
 
 logger = get_logger(__name__)
 
 app = typer.Typer()
 
-state: Dict[str, Optional[str]] = {"addrin": None, "addrout": None}
-
-
-@app.command()
-def posts_score_above_mean():
-    filter_ = FilterPostsScoreAboveMean(state["addrin"], state["addrout"])
-    filter_.run()
-
-
-@app.command()
-def null_url():
-    filter_ = FilterNullUrl(state["addrin"], state["addrout"])
-    filter_.run()
-
-
-@app.command()
-def uniq_posts():
-    filter_ = FilterUniqPosts(state["addrin"], state["addrout"])
-    filter_.run()
-
-
-@app.command()
-def nan_sentiment():
-    filter_ = FilterNanSentiment(state["addrin"], state["addrout"])
-    filter_.run()
+state: Dict[str, Union[str, int]] = {}
 
 
 @app.command()
 def ed_comments():
-    filter_ed_comments = FilterEdComment(state["addrin"], state["addrout"])
-    filter_ed_comments.run()
+    worker = VentilatorWorker(**state, executor_cls=FilterEdComment)
+    worker.run()
 
 
 @app.callback()
 def main(
-    addrin: str = typer.Argument(..., help="The address to read from"),
-    addrout: str = typer.Argument(..., help="The address to dump into"),
+    pulladdr: str = typer.Argument(..., help="The address to pull data from"),
+    reqaddr: str = typer.Argument(..., help="The address to ack the ventilator"),
+    pushaddr: str = typer.Argument(..., help="The address to push data to"),
 ):
-    state["addrin"] = addrin
-    state["addrout"] = addrout
+    state["pulladdr"] = pulladdr
+    state["reqaddr"] = reqaddr
+    state["pushaddr"] = pushaddr
