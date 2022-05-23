@@ -5,10 +5,9 @@ import zmq
 context = zmq.Context.instance()
 
 socket_sub = context.socket(zmq.SUB)
+socket_sub.setsockopt_string(zmq.SUBSCRIBE, "")
 socket_sub.connect("tcp://localhost:11000")
-socket_sub.setsockopt_string(zmq.SUBSCRIBE, "")
 socket_sub.connect("tcp://localhost:12000")
-socket_sub.setsockopt_string(zmq.SUBSCRIBE, "")
 
 
 socket_req1 = context.socket(zmq.REQ)
