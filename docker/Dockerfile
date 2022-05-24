@@ -6,4 +6,4 @@ COPY rma /app/rma
 WORKDIR /app
 RUN pip install poetry
 RUN poetry install --no-dev
-ENTRYPOINT ["poetry", "run", "rma"]
+ENTRYPOINT ["poetry", "run", "rma", "-vv"]
