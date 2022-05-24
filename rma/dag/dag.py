@@ -345,16 +345,14 @@ posts_source = Source(
     "posts_source_csv",
     "csv",
     ["/data/posts.csv"],
-    volumes=[
-        "../notebooks/data/the-reddit-irl-dataset-posts-reduced.csv:/data/posts.csv"
-    ],
+    volumes=["../notebooks/data/the-reddit-irl-dataset-posts.csv:/data/posts.csv"],
 )
 comments_source = Source(
     "comments_source_csv",
     "csv",
     ["/data/comments.csv"],
     volumes=[
-        "../notebooks/data/the-reddit-irl-dataset-comments-reduced.csv:/data/comments.csv"
+        "../notebooks/data/the-reddit-irl-dataset-comments.csv:/data/comments.csv"
     ],
 )
 # ===================================================================== Posts top path
@@ -365,14 +363,14 @@ filter_null_url = VentilatorBlock("filter_null_url", "filter null-url")
 
 # ===================================================================== Posts middle path
 filter_posts_cols_middle = VentilatorBlock(
-    "filter_cols1", "transform filter-columns", ["id", "score"]
+    "filter_posts_cols_middle", "transform filter-columns", ["id", "score"]
 )
 posts_score_mean = Worker("posts_score_mean", "transform posts-score-mean")
 
 
 # ===================================================================== Posts bottom
 filter_posts_cols_bottom = VentilatorBlock(
-    "filter_cols2", "transform filter-columns", ["score", "id", "url"]
+    "filter_posts_cols_bottom", "transform filter-columns", ["score", "id", "url"]
 )
 filter_posts_above_mean_score = Worker(
     "filter_posts_above_mean_score", "filter posts-score-above-mean"
