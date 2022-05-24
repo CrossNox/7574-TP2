@@ -2,6 +2,7 @@ from typing import Dict, List, Union
 
 import typer
 
+from rma.utils import get_logger
 from rma.tasks.base import Worker, VentilatorWorker
 from rma.tasks.transforms import (
     FilterColumn,
@@ -9,7 +10,6 @@ from rma.tasks.transforms import (
     MeanSentiment,
     PostsScoreMean,
 )
-from rma.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -18,7 +18,11 @@ app = typer.Typer()
 
 @app.command()
 def posts_score_mean(
-    subaddr: str, reqaddr: str, pubaddr: str, repaddr: str, nsubs: int,
+    subaddr: str,
+    reqaddr: str,
+    pubaddr: str,
+    repaddr: str,
+    nsubs: int,
 ):
     worker = Worker(
         subaddr=subaddr,
@@ -33,7 +37,11 @@ def posts_score_mean(
 
 @app.command()
 def mean_sentiment(
-    subaddr: str, reqaddr: str, pubaddr: str, repaddr: str, nsubs: int,
+    subaddr: str,
+    reqaddr: str,
+    pubaddr: str,
+    repaddr: str,
+    nsubs: int,
 ):
     worker = Worker(
         subaddr=subaddr,

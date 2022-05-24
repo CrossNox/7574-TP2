@@ -21,6 +21,7 @@ class FilterPostsScoreAboveMean(Executor):
 class FilterEdComment(Executor):
     def handle_msg(self, msg):
         if re.search(ED_KWDS_PATTERN, msg["body"].lower()) is not None:
+            del msg["body"]  # TODO: remove from here
             self.task_out.send(json.dumps(msg).encode())
 
     def final_stmt(self):
@@ -51,7 +52,9 @@ class FilterUniqPosts(Executor):
         self.post_ids = set()
 
     def handle_msg(self, msg):
-        self.post_ids.add({"post_id": msg["post_id"]})
+        self.post_ids.add(msg["id"])
 
     def final_stmt(self):
-        self.task_out.send(json.dumps(list(self.post_ids)).encode())
+        for post_id in self.post_ids:
+            msg = {"id": post_id}
+            self.task_out.send(json.dumps(msg).encode())

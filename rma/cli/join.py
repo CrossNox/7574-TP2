@@ -2,9 +2,9 @@ from typing import Dict, List, Tuple, Union
 
 import typer
 
+from rma.utils import get_logger
 from rma.tasks.base import Joiner
 from rma.tasks.joiners import KeyJoin
-from rma.utils import get_logger
 
 logger = get_logger(__name__)
 

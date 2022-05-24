@@ -23,7 +23,8 @@ BASE_DATA = {
 
 class Node(abc.ABC):
     def __init__(
-        self, node_id: str,
+        self,
+        node_id: str,
     ):
         self.children: List[Node] = []
         self.parents: List[Node] = []
@@ -133,7 +134,7 @@ class VentilatorBlock(Node):
         node_id: str,
         cmd: str,
         cmd_args: Optional[List[str]] = None,
-        nworkers: int = 3,
+        nworkers: int = 1,
         subport: int = DEFAULT_SUBPORT,
         reqport: int = DEFAULT_REQPORT,
         pubport: int = DEFAULT_PUBPORT,
@@ -152,11 +153,15 @@ class VentilatorBlock(Node):
     @property
     def source_config(self):
         parent = self.parents[0]
+        parent_name = parent.node_id
+        if isinstance(parent, VentilatorBlock):
+            parent_name = f"{parent.node_id}_sink"
+
         vsrc_name = f"{self.node_id}_src"
         data = {vsrc_name: deepcopy(BASE_DATA)}
         data[vsrc_name][
             "command"
-        ] = f"ventilate source tcp://{parent.node_id}:{self.subport} tcp://{parent.node_id}:{self.reqport} tcp://*:{V_SRC_PUSH_PORT} tcp://*:{V_SRC_REP_PORT} tcp://{self.node_id}_sink:{V_SRC_REQ_PORT} {self.nworkers}"
+        ] = f"ventilate source tcp://{parent_name}:{self.subport} tcp://{parent_name}:{self.reqport} tcp://*:{V_SRC_PUSH_PORT} tcp://*:{V_SRC_REP_PORT} tcp://{self.node_id}_sink:{V_SRC_REQ_PORT} {self.nworkers}"
         return data
 
     def worker_config(self, i):
@@ -379,17 +384,53 @@ join_dump_posts_urls = DAGJoiner("join_dump_posts_urls", "bykey", ["id"])
 # ===================================================================== Sink
 sink = Sink("sink", "printmsg")
 
+# Test join
+# test_source_1 = Source(
+#    "test_source_1",
+#    "csv",
+#    ["/data/file1.csv"],
+#    volumes=["../tests/resources/test1.csv:/data/file1.csv"],
+# )
+# test_source_2 = Source(
+#    "test_source_2",
+#    "csv",
+#    ["/data/file2.csv"],
+#    volumes=["../tests/resources/test2.csv:/data/file2.csv"],
+# )
+# test_join = DAGJoiner("test_join", "bykey", ["key"])
+# dag >> test_source_1
+# dag >> test_source_2
+# test_source_1 >> test_join
+# test_source_2 >> test_join
+# test_join >> sink
+
+# Test comments lower path
+# dag >> comments_source >> filter_comments_cols_bottom >> filter_ed_comments >> extract_post_id_bottom >> filter_unique_posts >> sink
+
+# Test posts middle+bottom paths
+# dag >> posts_source
+# posts_source >> filter_posts_cols_middle >> posts_score_mean
+# posts_source >> filter_posts_cols_bottom >> filter_posts_above_mean_score
+# posts_score_mean > filter_posts_above_mean_score  # add dependency
+# filter_posts_above_mean_score >> sink
+
+
 dag >> posts_source
 dag >> comments_source
 
 posts_source >> filter_posts_cols_middle >> posts_score_mean
 posts_source >> filter_posts_cols_bottom >> filter_posts_above_mean_score
 posts_score_mean > filter_posts_above_mean_score  # add dependency
-
-comments_source >> filter_comments_cols_bottom >> filter_ed_comments >> extract_post_id_bottom >> filter_unique_posts
-
 filter_posts_above_mean_score >> join_dump_posts_urls
-filter_unique_posts >> join_dump_posts_urls
+
+(
+    comments_source
+    >> filter_comments_cols_bottom
+    >> filter_ed_comments
+    >> extract_post_id_bottom
+    >> filter_unique_posts
+    >> join_dump_posts_urls
+)
 
 join_dump_posts_urls >> sink
 

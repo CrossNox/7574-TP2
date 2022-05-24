@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 class ExtractPostID(Executor):
     def handle_msg(self, msg):
-        msg["post_id"] = re.match(
+        msg["id"] = re.match(
             r"https://old.reddit.com/r/me_?irl/comments/([^/]+)/.*", msg["permalink"]
         ).groups()[0]
         del msg["permalink"]

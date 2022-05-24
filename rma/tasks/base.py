@@ -76,8 +76,50 @@ class VentilatorSource:
 
             self.push.send(s)
 
+        logger.info("Sending %s poison pills", self.nworkers)
         for _ in range(self.nworkers):
             self.push.send(b"")
+
+
+class VentilatorWorker:
+    def __init__(
+        self,
+        pulladdr,
+        reqaddr,
+        pushaddr,
+        executor_cls,
+        executor_kwargs=None,
+    ):
+        self.context = zmq.Context.instance()
+
+        # PULL address to get message from
+        self.task_pull = self.context.socket(zmq.PULL)
+        self.task_pull.connect(pulladdr)
+
+        # Source sync
+        self.source_req = self.context.socket(zmq.REQ)
+        self.source_req.connect(reqaddr)
+
+        # PUSH addr
+        self.push = self.context.socket(zmq.PUSH)
+        self.push.connect(pushaddr)
+
+        # Thingy to execute
+        if executor_kwargs is None:
+            executor_kwargs = dict()
+        self.executor = executor_cls(
+            task_in=self.task_pull, task_out=self.push, **executor_kwargs
+        )
+
+        logger.info("Worker pulling from %s", pulladdr)
+        logger.info("Worker synced to %s", reqaddr)
+        logger.info("Worker pushing to %s", pushaddr)
+
+    def run(self):
+        self.source_req.send(b"")
+        self.source_req.recv()
+        self.executor.run()
+        self.push.send(b"")
 
 
 class VentilatorSink:
@@ -123,55 +165,18 @@ class VentilatorSink:
             _ = self.syncsubs.recv()
             self.syncsubs.send(b"")
             subs += 1
-            logger.info(f"+1 subscriber ({subs}/{self.nworkers})")
+            logger.info(f"Ventilate sink :: +1 subscriber ({subs}/{self.nworkers})")
 
-        while True:
+        alive_workers = self.nworkers
+        while alive_workers > 0:
             s = self.workers_results.recv()
 
             if s == b"":
-                self.nworkers -= 1
+                alive_workers -= 1
+            else:
+                self.pub.send(s)
 
-                if self.nworkers == 0:
-                    self.pub.send(b"")
-                    break
-
-            self.pub.send(s)
-
-
-class VentilatorWorker:
-    def __init__(
-        self, pulladdr, reqaddr, pushaddr, executor_cls, executor_kwargs=None,
-    ):
-        self.context = zmq.Context.instance()
-
-        # PULL address to get message from
-        self.task_pull = self.context.socket(zmq.PULL)
-        self.task_pull.connect(pulladdr)
-
-        # Source sync
-        self.source_req = self.context.socket(zmq.REQ)
-        self.source_req.connect(reqaddr)
-
-        # PUSH addr
-        self.push = self.context.socket(zmq.PUSH)
-        self.push.connect(pushaddr)
-
-        # Thingy to execute
-        if executor_kwargs is None:
-            executor_kwargs = dict()
-        self.executor = executor_cls(
-            task_in=self.task_pull, task_out=self.push, **executor_kwargs
-        )
-
-        logger.info("Worker pulling from %s", pulladdr)
-        logger.info("Worker synced to %s", reqaddr)
-        logger.info("Worker pushing to %s", pushaddr)
-
-    def run(self):
-        self.source_req.send(b"")
-        self.source_req.recv()
-        self.executor.run()
-        self.push.send(b"")
+        self.pub.send(b"")
 
 
 class Worker:
@@ -301,7 +306,9 @@ class Joiner:
         self.sub = self.context.socket(zmq.SUB)
         self.sub.setsockopt_string(zmq.SUBSCRIBE, "")
 
-        for dep_sync, dep_sub in inputs:
+        self.inputs = inputs
+        logger.info("Joiner :: Syncing with all inputs")
+        for dep_sync, dep_sub in self.inputs:
             self.sub.connect(dep_sub)
 
             _dep_sync = self.context.socket(zmq.REQ)
@@ -316,18 +323,18 @@ class Joiner:
         )
 
     def run(self):
-        logger.info("Worker :: Syncing with all subs")
+        logger.info("Joiner :: Syncing with all subs")
         subs = 0
         while subs < self.nsubs:
             _ = self.syncsubs.recv()
             self.syncsubs.send(b"")
             subs += 1
-            logger.info(f"Worker :: +1 subscriber ({subs}/{self.nsubs})")
+            logger.info(f"Joiner :: +1 subscriber ({subs}/{self.nsubs})")
 
-        logger.info("Worker :: Running executor")
+        logger.info("Joiner :: Running executor")
         self.executor.run()
 
-        logger.info("Worker :: Sending poison pill")
+        logger.info("Joiner :: Sending poison pill")
         self.pub.send(b"")
 
-        logger.info("Worker :: Exiting")
+        logger.info("Joiner :: Exiting")
