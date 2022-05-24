@@ -2,7 +2,6 @@ from typing import Dict, List, Union
 
 import typer
 
-from rma.utils import get_logger
 from rma.tasks.base import Worker, VentilatorWorker
 from rma.tasks.transforms import (
     FilterColumn,
@@ -10,6 +9,7 @@ from rma.tasks.transforms import (
     MeanSentiment,
     PostsScoreMean,
 )
+from rma.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -20,11 +20,7 @@ state: Dict[str, Union[str, int]] = {}
 
 @app.command()
 def posts_score_mean(
-    subaddr: str,
-    reqaddr: str,
-    pubaddr: str,
-    repaddr: str,
-    nsubs: int = 1,
+    subaddr: str, reqaddr: str, pubaddr: str, repaddr: str, nsubs: int,
 ):
     worker = Worker(
         subaddr=subaddr,
@@ -39,11 +35,7 @@ def posts_score_mean(
 
 @app.command()
 def mean_sentiment(
-    subaddr: str,
-    reqaddr: str,
-    pubaddr: str,
-    repaddr: str,
-    nsubs: int = 1,
+    subaddr: str, reqaddr: str, pubaddr: str, repaddr: str, nsubs: int,
 ):
     worker = Worker(
         subaddr=subaddr,
@@ -57,25 +49,32 @@ def mean_sentiment(
 
 
 @app.command()
-def filter_columns(columns: List[str]):
+def filter_columns(
+    pulladdr: str = typer.Argument(..., help="The address to pull data from"),
+    reqaddr: str = typer.Argument(..., help="The address to ack the ventilator"),
+    pushaddr: str = typer.Argument(..., help="The address to push data to"),
+    columns: List[str] = typer.Argument(..., help="Columns to keep"),
+):
     worker = VentilatorWorker(
-        **state, executor_cls=FilterColumn, executor_kwargs={"columns": columns}
+        pulladdr=pulladdr,
+        reqaddr=reqaddr,
+        pushaddr=pushaddr,
+        executor_cls=FilterColumn,
+        executor_kwargs={"columns": columns},
     )
     worker.run()
 
 
 @app.command()
-def extract_post_id():
-    worker = VentilatorWorker(**state, executor_cls=ExtractPostID)
-    worker.run()
-
-
-@app.callback()
-def main(
+def extract_post_id(
     pulladdr: str = typer.Argument(..., help="The address to pull data from"),
     reqaddr: str = typer.Argument(..., help="The address to ack the ventilator"),
     pushaddr: str = typer.Argument(..., help="The address to push data to"),
 ):
-    state["pulladdr"] = pulladdr
-    state["reqaddr"] = reqaddr
-    state["pushaddr"] = pushaddr
+    worker = VentilatorWorker(
+        pulladdr=pulladdr,
+        reqaddr=reqaddr,
+        pushaddr=pushaddr,
+        executor_cls=ExtractPostID,
+    )
+    worker.run()

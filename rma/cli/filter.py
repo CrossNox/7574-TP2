@@ -25,7 +25,7 @@ def uniq_posts(
     reqaddr: str,
     pubaddr: str,
     repaddr: str,
-    nsubs: int = 1,
+    nsubs: int,
 ):
     # TODO: this is a limitation design
     # A ventilator worker should be able to declare dependencies
@@ -46,9 +46,9 @@ def posts_score_above_mean(
     reqaddr: str,
     pubaddr: str,
     repaddr: str,
+    nsubs: int,
     meansyncaddr: str,
     meansubaddr: str,
-    nsubs: int = 1,
 ):
     # TODO: this is a limitation design
     # A ventilator worker should be able to declare dependencies
