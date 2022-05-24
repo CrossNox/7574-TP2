@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  source_csv:
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - testing_net
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ../notebooks/data/the-reddit-irl-dataset-posts-reduced.csv:/data/posts.csv
+    command: source "tcp://*:5000" "tcp://*:6000" 1 csv /data/posts.csv
+
+  sink_file:
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - testing_net
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: sink "tcp://source_csv:5000" "tcp://source_csv:6000" printmsg
+
+
+networks:
+  testing_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.125.0/24
