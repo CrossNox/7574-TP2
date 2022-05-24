@@ -214,7 +214,7 @@ class Worker(Node):
         self.pubport = pubport
         self.repport = repport
 
-        self.deps = []
+        self.deps: List[Node] = []
 
         self.cmdargs = cmdargs or []
         self.cmd = cmd
@@ -265,8 +265,6 @@ class DAGJoiner(Node):
         self.reqport = reqport
         self.pubport = pubport
         self.repport = repport
-
-        self.deps = []
 
         self.cmdargs = cmdargs or []
         self.cmd = cmd
@@ -428,7 +426,14 @@ filter_posts_above_mean_score >> join_dump_posts_urls
     >> join_dump_posts_urls
 )
 
-comments_source >> filter_comments_cols_side >> filter_nan_sentiment >> extract_post_id_side >> mean_sentiment >> join_download_meme
+(
+    comments_source
+    >> filter_comments_cols_side
+    >> filter_nan_sentiment
+    >> extract_post_id_side
+    >> mean_sentiment
+    >> join_download_meme
+)
 
 join_download_meme >> download_meme_sink
 join_dump_posts_urls >> memes_url_sink

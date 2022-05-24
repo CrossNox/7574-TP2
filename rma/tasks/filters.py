@@ -1,9 +1,9 @@
-import json
 import re
+import json
 
-from rma.constants import ED_KWDS_PATTERN
-from rma.tasks.executor import Executor
 from rma.utils import get_logger
+from rma.tasks.executor import Executor
+from rma.constants import ED_KWDS_PATTERN
 
 logger = get_logger(__name__)
 

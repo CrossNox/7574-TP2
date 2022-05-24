@@ -1,5 +1,3 @@
-from typing import Dict, Union
-
 import typer
 
 from rma.utils import get_logger

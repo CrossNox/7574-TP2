@@ -1,10 +1,10 @@
-from collections import defaultdict
-import json
 import re
+import json
 from typing import List
+from collections import defaultdict
 
-from rma.tasks.executor import Executor
 from rma.utils import get_logger
+from rma.tasks.executor import Executor
 
 logger = get_logger(__name__)
 

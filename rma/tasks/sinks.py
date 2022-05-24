@@ -1,8 +1,8 @@
 import abc
 import json
 
-import requests
 import zmq
+import requests
 
 from rma.utils import get_logger
 
