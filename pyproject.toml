@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rma"
-version = "1.6.0"
+version = "1.7.0"
 description = "Reddit Memes Analyzer, for fun (and passing Distribuidos I)."
 authors = ["CrossNox <ijmermet@gmail.com>"]
 
@@ -12,6 +12,7 @@ pyzmq = "22.3.0"
 Cython = "^0.29.30"
 mypy-extensions = "^0.4.3"
 requests = "^2.27.1"
+types-requests = "^2.27.27"
 
 [tool.poetry.dev-dependencies]
 jupyterlab = "^3.4.0"

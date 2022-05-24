@@ -32,8 +32,9 @@ class MeanSentiment(Executor):
         self.sentiment_scores[post_id]["sum"] += msg["sentiment"]
 
     def final_stmt(self):
-        retval = {k: v["sum"] / v["count"] for k, v in self.sentiment_scores.items()}
-        self.task_out.send(json.dumps(retval).encode())
+        for k, v in self.sentiment_scores.items():
+            msg = {"post_id": k, "mean_sentiment": v["sum"] / v["count"]}
+            self.task_out.send(json.dumps(msg).encode())
 
 
 class PostsScoreMean(Executor):

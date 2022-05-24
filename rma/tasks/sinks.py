@@ -2,6 +2,7 @@ import abc
 import json
 
 import zmq
+import requests
 
 from rma.utils import get_logger
 
@@ -25,6 +26,9 @@ class Sink(abc.ABC):
     def sink(self, msg):
         pass
 
+    def final_stmt(self):
+        pass
+
     def run(self):
         logger.info("Sink :: syncing with source")
         self.syncclient.send(b"")
@@ -41,6 +45,8 @@ class Sink(abc.ABC):
 
             msg = json.loads(s.decode())
             self.sink(msg)
+
+        self.final_stmt()
 
 
 class PrintSink(Sink):
@@ -61,3 +67,25 @@ class FileSink(Sink):
             f.write(json.dumps(msg))
             f.write("\n")
             f.flush()
+
+
+class TopPostDownload(Sink):
+    def __init__(self, path, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.path = path
+        self.top_meme = None
+
+    def sink(self, msg):
+        if msg["url"] is None:
+            return
+
+        if self.top_meme is None or float(self.top_meme["mean_sentiment"]) >= float(
+            msg["mean_sentiment"]
+        ):
+            self.top_meme = msg
+
+    def final_stmt(self):
+        with open(self.path, "wb") as f:
+            res = requests.get(self.top_meme["url"])
+            res.raise_for_status()
+            f.write(res.content)
