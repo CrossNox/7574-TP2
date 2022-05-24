@@ -13,6 +13,7 @@ Cython = "^0.29.30"
 mypy-extensions = "^0.4.3"
 requests = "^2.27.1"
 types-requests = "^2.27.27"
+types-PyYAML = "^6.0.7"
 
 [tool.poetry.dev-dependencies]
 jupyterlab = "^3.4.0"
