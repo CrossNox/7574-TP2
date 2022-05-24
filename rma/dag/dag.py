@@ -240,6 +240,54 @@ class Worker(Node):
         return data
 
 
+class DAGJoiner(Node):
+    def __init__(
+        self,
+        node_id: str,
+        cmd: str,
+        cmdargs: Optional[List[str]] = None,
+        subport: int = DEFAULT_SUBPORT,
+        reqport: int = DEFAULT_REQPORT,
+        pubport: int = DEFAULT_PUBPORT,
+        repport: int = DEFAULT_REPPORT,
+    ):
+        super().__init__(node_id)
+        self.subport = subport
+        self.reqport = reqport
+        self.pubport = pubport
+        self.repport = repport
+
+        self.deps = []
+
+        self.cmdargs = cmdargs or []
+        self.cmd = cmd
+
+    @property
+    def config(self):
+        data = {self.node_id: deepcopy(BASE_DATA)}
+
+        _cmdargs = " ".join(self.cmdargs).strip()
+
+        subaddrs = []
+        reqaddrs = []
+        for par in self.parents:
+            par_node_id = par.node_id
+            if isinstance(par, VentilatorBlock):
+                par_node_id = f"{par.node_id}_sink"
+
+            subaddrs.append("--subaddr")
+            subaddrs.append(f"tcp://{par_node_id}:{par.pubport}")
+            reqaddrs.append("--reqaddr")
+            reqaddrs.append(f"tcp://{par_node_id}:{par.repport}")
+        _subaddrs = " ".join(subaddrs)
+        _reqaddrs = " ".join(reqaddrs)
+
+        data[self.node_id][
+            "command"
+        ] = f"join {self.cmd} {_subaddrs} {_reqaddrs} tcp://*:{self.pubport} tcp://*:{self.repport} {self.ndeps} {_cmdargs}".strip()
+        return data
+
+
 class Sink(Node):
     def __init__(
         self,
@@ -281,35 +329,68 @@ class Sink(Node):
         return data
 
 
+# ===================================================================== Start
 dag = DAG("tp")
-source = Source(
-    "source_csv",
+posts_source = Source(
+    "posts_source_csv",
     "csv",
     ["/data/posts.csv"],
     volumes=[
         "../notebooks/data/the-reddit-irl-dataset-posts-reduced.csv:/data/posts.csv"
     ],
 )
-filter_cols1 = VentilatorBlock(
+comments_source = Source(
+    "comments_source_csv",
+    "csv",
+    ["/data/comments.csv"],
+    volumes=[
+        "../notebooks/data/the-reddit-irl-dataset-comments-reduced.csv:/data/comments.csv"
+    ],
+)
+
+# ===================================================================== Posts middle path
+filter_posts_cols_middle = VentilatorBlock(
     "filter_cols1", "transform filter-columns", ["id", "score"]
 )
-filter_cols2 = VentilatorBlock(
+posts_score_mean = Worker("posts_score_mean", "transform posts-score-mean")
+
+
+# ===================================================================== Posts bottom
+filter_posts_cols_bottom = VentilatorBlock(
     "filter_cols2", "transform filter-columns", ["score", "id", "url"]
 )
-
-# filter_null_url = VentilatorBlock("filter_null_url", "filter null-url")
-
-posts_score_mean = Worker("posts_score_mean", "transform posts-score-mean")
 filter_posts_above_mean_score = Worker(
     "filter_posts_above_mean_score", "filter posts-score-above-mean"
 )
 
+# ===================================================================== Comments bottom
+filter_comments_cols_bottom = VentilatorBlock(
+    "filter_comments_cols_bottom", "transform filter-columns", ["permalink", "body"]
+)
+filter_ed_comments = VentilatorBlock("filter_ed_comments", "filter ed-comments")
+extract_post_id_bottom = VentilatorBlock(
+    "extract_post_id_bottom", "transform extract-post-id"
+)
+filter_unique_posts = Worker("filter_unique_posts", "filter uniq-posts")
+
+# ===================================================================== JOIN
+join_dump_posts_urls = DAGJoiner("join_dump_posts_urls", "bykey", ["id"])
+
+# ===================================================================== Sink
 sink = Sink("sink", "printmsg")
 
-dag >> source
-source >> filter_cols1 >> posts_score_mean
-posts_score_mean > filter_posts_above_mean_score  # add dep
-source >> filter_cols2 >> filter_posts_above_mean_score
-filter_posts_above_mean_score >> sink
+dag >> posts_source
+dag >> comments_source
+
+posts_source >> filter_posts_cols_middle >> posts_score_mean
+posts_source >> filter_posts_cols_bottom >> filter_posts_above_mean_score
+posts_score_mean > filter_posts_above_mean_score  # add dependency
+
+comments_source >> filter_comments_cols_bottom >> filter_ed_comments >> extract_post_id_bottom >> filter_unique_posts
+
+filter_posts_above_mean_score >> join_dump_posts_urls
+filter_unique_posts >> join_dump_posts_urls
+
+join_dump_posts_urls >> sink
 
 print(yaml.safe_dump(dag.config, indent=2, width=188))

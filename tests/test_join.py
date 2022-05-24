@@ -1,17 +1,17 @@
 # pylint: disable=redefined-outer-name
 
 import json
-import tempfile
 import multiprocessing as mp
+import tempfile
 
-import pytest
 from pkg_resources import resource_filename
+import pytest
 
 from rma.tasks.base import Joiner
-from rma.tasks.sinks import FileSink
-from rma.utils import config_logging
 from rma.tasks.joiners import KeyJoin
+from rma.tasks.sinks import FileSink
 from rma.tasks.sources import CSVSource
+from rma.utils import config_logging
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ def join():
     def _run():
         thing = Joiner(
             pubaddr="tcp://*:6054",
-            subsyncaddr="tcp://*:6055",
+            repaddr="tcp://*:6055",
             nsubs=1,
             inputs=[
                 ("tcp://localhost:6051", "tcp://localhost:6050"),

@@ -1,7 +1,7 @@
 import typer
 
-from rma.utils import get_logger
 from rma.tasks.base import VentilatorSink, VentilatorSource
+from rma.utils import get_logger
 
 logger = get_logger(__name__)
 

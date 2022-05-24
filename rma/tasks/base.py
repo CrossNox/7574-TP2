@@ -140,12 +140,7 @@ class VentilatorSink:
 
 class VentilatorWorker:
     def __init__(
-        self,
-        pulladdr,
-        reqaddr,
-        pushaddr,
-        executor_cls,
-        executor_kwargs=None,
+        self, pulladdr, reqaddr, pushaddr, executor_cls, executor_kwargs=None,
     ):
         self.context = zmq.Context.instance()
 
@@ -285,7 +280,7 @@ class Joiner:
     def __init__(
         self,
         pubaddr,
-        subsyncaddr,
+        repaddr,
         nsubs: int,
         inputs: List[Tuple[str, str]],
         executor_cls,
@@ -299,7 +294,7 @@ class Joiner:
 
         # REP to sync with subscribers
         self.syncsubs = self.context.socket(zmq.REP)
-        self.syncsubs.bind(subsyncaddr)
+        self.syncsubs.bind(repaddr)
         self.nsubs = nsubs
 
         # Subscriptions

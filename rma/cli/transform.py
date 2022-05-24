@@ -15,8 +15,6 @@ logger = get_logger(__name__)
 
 app = typer.Typer()
 
-state: Dict[str, Union[str, int]] = {}
-
 
 @app.command()
 def posts_score_mean(

@@ -10,27 +10,23 @@ logger = get_logger(__name__)
 
 app = typer.Typer()
 
-state: Dict[str, Union[str, int, List[Tuple[str, str]]]] = {}
-
 
 @app.command()
 def bykey(
     pubaddr: str = typer.Argument(..., help="The address to publish data to"),
     repaddr: str = typer.Argument(..., help="The address to sync with subscribers"),
-    subaddr: List[str] = typer.Argument(..., help="The addresses to pull data from"),
-    reqaddr: List[str] = typer.Argument(
-        ..., help="The addresses to ack the publishers"
-    ),
     nsubs: int = typer.Argument(..., help="Number of subscribers"),
+    subaddr: List[str] = typer.Option(..., help="The addresses to pull data from"),
+    reqaddr: List[str] = typer.Option(..., help="The addresses to ack the publishers"),
     key: str = typer.Argument(..., help="The key on which to join"),
 ):
     inputs = list(zip(reqaddr, subaddr))
     joiner = Joiner(
         pubaddr=pubaddr,
-        subsyncaddr=repaddr,
+        repaddr=repaddr,
         nsubs=nsubs,
         inputs=inputs,
         executor_cls=KeyJoin,
-        executor_kwargs={"ninputs": len(state["inputs"]), "key": key},  # type: ignore
+        executor_kwargs={"ninputs": len(inputs), "key": key},  # type: ignore
     )
     joiner.run()

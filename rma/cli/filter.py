@@ -2,7 +2,6 @@ from typing import Dict, Union
 
 import typer
 
-from rma.utils import get_logger
 from rma.tasks.base import Worker, VentilatorWorker
 from rma.tasks.filters import (
     FilterNullUrl,
@@ -11,21 +10,16 @@ from rma.tasks.filters import (
     FilterNanSentiment,
     FilterPostsScoreAboveMean,
 )
+from rma.utils import get_logger
 
 logger = get_logger(__name__)
 
 app = typer.Typer()
 
-state: Dict[str, Union[str, int]] = {}
-
 
 @app.command()
 def uniq_posts(
-    subaddr: str,
-    reqaddr: str,
-    pubaddr: str,
-    repaddr: str,
-    nsubs: int,
+    subaddr: str, reqaddr: str, pubaddr: str, repaddr: str, nsubs: int,
 ):
     # TODO: this is a limitation design
     # A ventilator worker should be able to declare dependencies
