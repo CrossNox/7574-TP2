@@ -23,7 +23,8 @@ BASE_DATA = {
 
 class Node(abc.ABC):
     def __init__(
-        self, node_id: str,
+        self,
+        node_id: str,
     ):
         self.children: List[Node] = []
         self.parents: List[Node] = []
