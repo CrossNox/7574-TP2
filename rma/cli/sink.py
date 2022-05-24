@@ -1,15 +1,22 @@
 from typing import Dict
+from pathlib import Path
 
 import typer
 
 from rma.utils import get_logger
-from rma.tasks.sinks import PrintSink
+from rma.tasks.sinks import FileSink, PrintSink
 
 logger = get_logger(__name__)
 
 app = typer.Typer()
 
 state: Dict[str, str] = {}
+
+
+@app.command()
+def tofile(path: Path):
+    file_sink = FileSink(path=path, addrin=state["addrin"], syncaddr=state["addrsync"])
+    file_sink.run()
 
 
 @app.command()
