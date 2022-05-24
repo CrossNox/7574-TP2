@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 import typer
 
+from rma.cli.join import app as join_app
 from rma.cli.sink import app as sink_app
 from rma.cli.filter import app as filter_app
 from rma.cli.source import app as source_app
@@ -17,6 +18,7 @@ app.add_typer(sink_app, name="sink")
 app.add_typer(source_app, name="source")
 app.add_typer(transform_app, name="transform")
 app.add_typer(ventilate_app, name="ventilate")
+app.add_typer(join_app, name="join")
 
 CFG: Dict[str, Any] = {}
 
