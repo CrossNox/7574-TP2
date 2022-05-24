@@ -23,8 +23,7 @@ BASE_DATA = {
 
 class Node(abc.ABC):
     def __init__(
-        self,
-        node_id: str,
+        self, node_id: str,
     ):
         self.children: List[Node] = []
         self.parents: List[Node] = []
@@ -114,6 +113,7 @@ class Source(Node):
     @property
     def config(self):
         data = {self.node_id: deepcopy(BASE_DATA)}
+        data[self.node_id]["container_name"] = self.node_id
         _cmd = " ".join(self.cmdargs) if self.cmdargs is not None else ""
         data[self.node_id][
             "command"
@@ -134,7 +134,7 @@ class VentilatorBlock(Node):
         node_id: str,
         cmd: str,
         cmd_args: Optional[List[str]] = None,
-        nworkers: int = 1,
+        nworkers: int = 3,
         subport: int = DEFAULT_SUBPORT,
         reqport: int = DEFAULT_REQPORT,
         pubport: int = DEFAULT_PUBPORT,
@@ -159,6 +159,7 @@ class VentilatorBlock(Node):
 
         vsrc_name = f"{self.node_id}_src"
         data = {vsrc_name: deepcopy(BASE_DATA)}
+        data[vsrc_name]["container_name"] = vsrc_name
         data[vsrc_name][
             "command"
         ] = f"ventilate source tcp://{parent_name}:{self.subport} tcp://{parent_name}:{self.reqport} tcp://*:{V_SRC_PUSH_PORT} tcp://*:{V_SRC_REP_PORT} tcp://{self.node_id}_sink:{V_SRC_REQ_PORT} {self.nworkers}"
@@ -167,9 +168,10 @@ class VentilatorBlock(Node):
     def worker_config(self, i):
         src_name = f"{self.node_id}_src"
         sink_name = f"{self.node_id}_sink"
-        worker_name = f"{self.node_id}_worker_{i}"
+        worker_name = f"{self.node_id}_{i}_worker"
         data = {worker_name: deepcopy(BASE_DATA)}
         _cmdargs = " ".join(self.cmd_args)
+        data[worker_name]["container_name"] = worker_name
         data[worker_name][
             "command"
         ] = f"{self.cmd} tcp://{src_name}:{V_SRC_PUSH_PORT} tcp://{src_name}:{V_SRC_REP_PORT} tcp://{sink_name}:{V_W_PUSH_PORT} {_cmdargs}".strip()
@@ -179,6 +181,7 @@ class VentilatorBlock(Node):
     def sink_config(self):
         vsink_name = f"{self.node_id}_sink"
         data = {vsink_name: deepcopy(BASE_DATA)}
+        data[vsink_name]["container_name"] = vsink_name
         data[vsink_name][
             "command"
         ] = f"ventilate sink tcp://*:{V_W_PUSH_PORT} tcp://*:{V_SRC_REQ_PORT} tcp://*:{self.pubport} {self.nworkers} tcp://*:{self.repport} {self.ndeps}"
@@ -228,6 +231,7 @@ class Worker(Node):
             parent_name = f"{parent.node_id}_sink"
 
         data = {self.node_id: deepcopy(BASE_DATA)}
+        data[self.node_id]["container_name"] = self.node_id
 
         _cmdargs = " ".join(self.cmdargs).strip()
 
@@ -287,6 +291,7 @@ class DAGJoiner(Node):
         _subaddrs = " ".join(subaddrs)
         _reqaddrs = " ".join(reqaddrs)
 
+        data[self.node_id]["container_name"] = self.node_id
         data[self.node_id][
             "command"
         ] = f"join {self.cmd} {_subaddrs} {_reqaddrs} tcp://*:{self.pubport} tcp://*:{self.repport} {self.ndeps} {_cmdargs}".strip()
@@ -327,6 +332,7 @@ class Sink(Node):
 
         data = {self.node_id: deepcopy(BASE_DATA)}
         _cmd = " ".join(self.cmdargs).strip() if self.cmdargs is not None else ""
+        data[self.node_id]["container_name"] = self.node_id
         data[self.node_id][
             "command"
         ] = f"sink tcp://{parent_name}:{self.subport} tcp://{parent_name}:{self.reqport} {self.cmd} {_cmd}".strip()
@@ -352,6 +358,11 @@ comments_source = Source(
         "../notebooks/data/the-reddit-irl-dataset-comments-reduced.csv:/data/comments.csv"
     ],
 )
+# ===================================================================== Posts top path
+filter_posts_cols_top = VentilatorBlock(
+    "filter_posts_cols_top", "transform filter-columns", ["id", "url"]
+)
+filter_null_url = VentilatorBlock("filter_null_url", "filter null-url")
 
 # ===================================================================== Posts middle path
 filter_posts_cols_middle = VentilatorBlock(
@@ -378,46 +389,31 @@ extract_post_id_bottom = VentilatorBlock(
 )
 filter_unique_posts = Worker("filter_unique_posts", "filter uniq-posts")
 
+# ===================================================================== Comments side
+filter_comments_cols_side = VentilatorBlock(
+    "filter_comments_cols_side", "transform filter-columns", ["permalink", "sentiment"]
+)
+filter_nan_sentiment = VentilatorBlock("filter_nan_sentiment", "filter nan-sentiment")
+extract_post_id_side = VentilatorBlock(
+    "extract_post_id_side", "transform extract-post-id"
+)
+mean_sentiment = Worker("mean_sentiment", "transform mean-sentiment")
+
 # ===================================================================== JOIN
 join_dump_posts_urls = DAGJoiner("join_dump_posts_urls", "bykey", ["id"])
+join_download_meme = DAGJoiner("join_download_meme", "bykey", ["id"])
 
 # ===================================================================== Sink
 sink = Sink("sink", "printmsg")
-
-# Test join
-# test_source_1 = Source(
-#    "test_source_1",
-#    "csv",
-#    ["/data/file1.csv"],
-#    volumes=["../tests/resources/test1.csv:/data/file1.csv"],
-# )
-# test_source_2 = Source(
-#    "test_source_2",
-#    "csv",
-#    ["/data/file2.csv"],
-#    volumes=["../tests/resources/test2.csv:/data/file2.csv"],
-# )
-# test_join = DAGJoiner("test_join", "bykey", ["key"])
-# dag >> test_source_1
-# dag >> test_source_2
-# test_source_1 >> test_join
-# test_source_2 >> test_join
-# test_join >> sink
-
-# Test comments lower path
-# dag >> comments_source >> filter_comments_cols_bottom >> filter_ed_comments >> extract_post_id_bottom >> filter_unique_posts >> sink
-
-# Test posts middle+bottom paths
-# dag >> posts_source
-# posts_source >> filter_posts_cols_middle >> posts_score_mean
-# posts_source >> filter_posts_cols_bottom >> filter_posts_above_mean_score
-# posts_score_mean > filter_posts_above_mean_score  # add dependency
-# filter_posts_above_mean_score >> sink
+memes_url_sink = Sink("sink_memes_url", "printmsg")
+mean_posts_score_sink = Sink("sink_mean_posts_score", "printmsg")
+download_meme_sink = Sink("sink_download_meme", "printmsg")
 
 
 dag >> posts_source
 dag >> comments_source
 
+posts_source >> filter_posts_cols_top >> filter_null_url >> join_download_meme
 posts_source >> filter_posts_cols_middle >> posts_score_mean
 posts_source >> filter_posts_cols_bottom >> filter_posts_above_mean_score
 posts_score_mean > filter_posts_above_mean_score  # add dependency
@@ -432,6 +428,11 @@ filter_posts_above_mean_score >> join_dump_posts_urls
     >> join_dump_posts_urls
 )
 
-join_dump_posts_urls >> sink
+comments_source >> filter_comments_cols_side >> filter_nan_sentiment >> extract_post_id_side >> mean_sentiment >> join_download_meme
+
+join_download_meme >> download_meme_sink
+join_dump_posts_urls >> memes_url_sink
+posts_score_mean >> mean_posts_score_sink
+
 
 print(yaml.safe_dump(dag.config, indent=2, width=188))

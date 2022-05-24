@@ -1,8 +1,11 @@
-import re
 import json
+import re
 
-from rma.tasks.executor import Executor
 from rma.constants import ED_KWDS_PATTERN
+from rma.tasks.executor import Executor
+from rma.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class FilterPostsScoreAboveMean(Executor):
@@ -30,8 +33,11 @@ class FilterEdComment(Executor):
 
 class FilterNanSentiment(Executor):
     def handle_msg(self, msg):
-        if msg["sentiment"] is not None:
+        try:
+            float(msg["sentiment"])
             self.task_out.send(json.dumps(msg).encode())
+        except:  # pylint: disable=bare-except
+            pass
 
     def final_stmt(self):
         pass

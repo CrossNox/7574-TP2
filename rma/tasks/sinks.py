@@ -1,8 +1,8 @@
 import abc
 import json
 
-import zmq
 import requests
+import zmq
 
 from rma.utils import get_logger
 
@@ -30,17 +30,17 @@ class Sink(abc.ABC):
         pass
 
     def run(self):
-        logger.info("Sink :: syncing with source")
+        logger.debug("Sink :: syncing with source")
         self.syncclient.send(b"")
         self.syncclient.recv()
 
-        logger.info("Sink :: running loop")
+        logger.debug("Sink :: running loop")
         while True:
             s = self.receiver.recv()
-            logger.info("Sink :: Got message")
+            # logger.debug("Sink :: Got message")
 
             if s == b"":
-                logger.info("Sink :: got poison pill")
+                logger.debug("Sink :: got poison pill")
                 break
 
             msg = json.loads(s.decode())
@@ -61,7 +61,7 @@ class FileSink(Sink):
         self.messages = 0
 
     def sink(self, msg):
-        logger.info("Sink :: Message number %s received", self.messages)
+        logger.debug("Sink :: Message number %s received", self.messages)
         self.messages += 1
         with open(self.path, "a") as f:
             f.write(json.dumps(msg))

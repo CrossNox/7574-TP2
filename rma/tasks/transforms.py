@@ -1,19 +1,23 @@
-import re
-import json
-from typing import List
 from collections import defaultdict
+import json
+import re
+from typing import List
 
-from rma.utils import get_logger
 from rma.tasks.executor import Executor
+from rma.utils import get_logger
 
 logger = get_logger(__name__)
 
 
 class ExtractPostID(Executor):
     def handle_msg(self, msg):
-        msg["id"] = re.match(
+        msg_id = re.match(
             r"https://old.reddit.com/r/me_?irl/comments/([^/]+)/.*", msg["permalink"]
-        ).groups()[0]
+        ).groups()
+        if msg_id is None:
+            logger.error("Bad permalink %s", msg["permalink"])
+            return
+        msg["id"] = msg_id[0]
         del msg["permalink"]
         self.task_out.send(json.dumps(msg).encode())
 
@@ -27,13 +31,13 @@ class MeanSentiment(Executor):
         self.sentiment_scores = defaultdict(lambda: {"count": 0, "sum": 0})
 
     def handle_msg(self, msg):
-        post_id = msg["post_id"]
+        post_id = msg["id"]
         self.sentiment_scores[post_id]["count"] += 1
-        self.sentiment_scores[post_id]["sum"] += msg["sentiment"]
+        self.sentiment_scores[post_id]["sum"] += float(msg["sentiment"])
 
     def final_stmt(self):
         for k, v in self.sentiment_scores.items():
-            msg = {"post_id": k, "mean_sentiment": v["sum"] / v["count"]}
+            msg = {"id": k, "mean_sentiment": v["sum"] / v["count"]}
             self.task_out.send(json.dumps(msg).encode())
 
 

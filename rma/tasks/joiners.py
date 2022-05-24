@@ -37,7 +37,7 @@ class KeyJoin(Executor):
             s = self.task_in.recv()
 
             if s == b"":
-                logger.info("KeyJoin :: Got a poison pill")
+                logger.debug("KeyJoin :: Got a poison pill")
                 # Now a good question, for when I have had more sleep
                 # Do we need n pills? Or does the first one warrant we can do no more joins?
                 # Does breaking here apply in all out-of-order-scenarios?
