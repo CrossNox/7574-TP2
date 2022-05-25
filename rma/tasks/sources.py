@@ -15,6 +15,7 @@ class Source(abc.ABC):
 
         # PUB to publish data
         self.sender = self.context.socket(zmq.PUB)
+        self.sender.sndhwm = 1100000
         self.sender.bind(addrout)
 
         # REP to sync with all subscribers
@@ -51,9 +52,13 @@ class CSVSource(Source):
     def __init__(self, path, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.path = path
+        self.ngen = 0
 
     def gen(self):
         with open(self.path, newline="") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
+                self.ngen += 1
+                if (self.ngen % 100_000) == 0:
+                    logger.info("%s messages sent", self.ngen)
                 yield row

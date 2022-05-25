@@ -1,8 +1,8 @@
 import json
 from typing import Dict
 
-from rma.utils import get_logger
 from rma.tasks.executor import Executor
+from rma.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -13,6 +13,7 @@ class KeyJoin(Executor):
         self.key = key
         self.inputs = ninputs
         self.joins: Dict[str, Dict[str, str]] = dict()
+        self.nprocessed = 0
 
     @classmethod
     def merge_dicts(cls, a, b):
@@ -21,6 +22,10 @@ class KeyJoin(Executor):
         return z
 
     def handle_msg(self, msg):
+        self.nprocessed += 1
+        if (self.nprocessed % 25_000) == 0:
+            logger.info("KeyJoin :: %s messages processed", self.nprocessed)
+
         if msg[self.key] in self.joins:
             old_dict = self.joins[msg[self.key]]
             dict_merge = KeyJoin.merge_dicts(old_dict, msg)

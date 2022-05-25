@@ -1,10 +1,10 @@
-import re
-import json
-from typing import List
 from collections import defaultdict
+import json
+import re
+from typing import List
 
-from rma.utils import get_logger
 from rma.tasks.executor import Executor
+from rma.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -51,6 +51,7 @@ class PostsScoreMean(Executor):
 
     def final_stmt(self):
         retval = sum(self.posts_scores) / len(self.posts_scores)
+        # TODO: send a dict
         self.task_out.send(json.dumps(retval).encode())
 
 

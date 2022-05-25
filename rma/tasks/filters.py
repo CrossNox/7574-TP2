@@ -1,9 +1,9 @@
-import re
 import json
+import re
 
-from rma.utils import get_logger
-from rma.tasks.executor import Executor
 from rma.constants import ED_KWDS_PATTERN
+from rma.tasks.executor import Executor
+from rma.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -45,7 +45,7 @@ class FilterNanSentiment(Executor):
 
 class FilterNullUrl(Executor):
     def handle_msg(self, msg):
-        if msg["url"] is not None:
+        if msg["url"] is not None and msg["url"] != "":
             self.task_out.send(json.dumps(msg).encode())
 
     def final_stmt(self):
