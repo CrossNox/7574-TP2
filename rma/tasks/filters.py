@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 class FilterPostsScoreAboveMean(Executor):
     def __init__(self, mean, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.mean = int(mean)
+        self.mean = float(mean)
 
     def handle_msg(self, msg):
         if int(msg["score"]) >= self.mean:

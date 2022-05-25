@@ -15,7 +15,7 @@ class Source(abc.ABC):
 
         # PUB to publish data
         self.sender = self.context.socket(zmq.PUB)
-        self.sender.sndhwm = 1100000
+        self.sender.sndhwm = 0
         self.sender.bind(addrout)
 
         # REP to sync with all subscribers
@@ -45,7 +45,22 @@ class Source(abc.ABC):
             self.sender.send(json.dumps(thing).encode())
 
         logger.debug("Source :: Sending poison pill")
-        self.sender.send(b"")
+
+        pill_acks = 0
+        self.syncservice.rcvtimeo = 1000
+        while pill_acks < self.nsubs:
+            self.sender.send(b"")
+            try:
+                self.syncservice.recv()
+                self.syncservice.send(b"")
+                pill_acks += 1
+            except zmq.ZMQError as e:
+                if e.errno == zmq.EAGAIN:
+                    pass
+                else:
+                    raise
+
+        logger.debug("Source :: Exiting")
 
 
 class CSVSource(Source):
@@ -59,6 +74,6 @@ class CSVSource(Source):
             reader = csv.DictReader(csvfile)
             for row in reader:
                 self.ngen += 1
-                if (self.ngen % 100_000) == 0:
+                if (self.ngen % 10_000) == 0:
                     logger.info("%s messages sent", self.ngen)
                 yield row

@@ -1,17 +1,17 @@
 # pylint: disable=redefined-outer-name
 
 import json
-import tempfile
 import multiprocessing as mp
+import tempfile
 
-import pytest
 from pkg_resources import resource_filename
+import pytest
 
 from rma.tasks.base import Joiner
-from rma.tasks.sinks import FileSink
-from rma.utils import config_logging
 from rma.tasks.joiners import KeyJoin
+from rma.tasks.sinks import FileSink
 from rma.tasks.sources import CSVSource
+from rma.utils import config_logging
 
 
 @pytest.fixture
@@ -75,7 +75,7 @@ def file_sink():
 
 
 def setup_function(_function):
-    config_logging(1, False)
+    config_logging(2, False)
 
 
 def test_join(source1, source2, join, file_sink):

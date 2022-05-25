@@ -25,6 +25,8 @@ class VentilatorSource:
         self.sub = self.context.socket(zmq.SUB)
         self.sub.connect(subaddr)
         self.sub.setsockopt_string(zmq.SUBSCRIBE, subfilter)
+        self.sub.sndhwm = 0
+        self.sub.rcvhwm = 0
 
         # SUB sync
         self.subsync = self.context.socket(zmq.REQ)
@@ -83,9 +85,28 @@ class VentilatorSource:
 
             self.push.send(s)
 
-        logger.debug("Sending %s poison pills", self.nworkers)
-        for _ in range(self.nworkers):
+        logger.debug("ACKing poison pill")
+        self.subsync.send(b"")
+        self.subsync.recv()
+
+        logger.debug("Sending %s poison pills to workers", self.nworkers)
+        pill_acks = 0
+        self.sync_rep.rcvtimeo = 1000
+        while pill_acks < self.nworkers:
             self.push.send(b"")
+            try:
+                self.sync_rep.recv()
+                self.sync_rep.send(b"")
+                pill_acks += 1
+            except zmq.ZMQError as e:
+                if e.errno == zmq.EAGAIN:
+                    pass
+                else:
+                    raise
+
+        logger.debug("Expecting poison pill ack from sink")
+        self.sink_req.send(b"")
+        self.sink_req.recv()
 
         logger.debug("VentilatorSource :: exiting")
 
@@ -120,9 +141,17 @@ class VentilatorWorker:
         logger.debug("Worker pushing to %s", pushaddr)
 
     def run(self):
+        logger.info("Sync with ventilator source")
         self.source_req.send(b"")
         self.source_req.recv()
+
         self.executor.run()
+
+        logger.info("Acking poison pill to ventilator source")
+        self.source_req.send(b"")
+        self.source_req.recv()
+
+        logger.info("Sending poison pill to ventilator sink")
         self.push.send(b"")
 
 
@@ -142,7 +171,8 @@ class VentilatorSink:
 
         # PUB where to publish results
         self.pub = self.context.socket(zmq.PUB)
-        self.pub.sndhwm = 1100000
+        self.pub.sndhwm = 0
+        self.pub.rcvhwm = 0
         self.pub.bind(pubaddr)
 
         # REP to sync subs
@@ -181,7 +211,27 @@ class VentilatorSink:
             else:
                 self.pub.send(s)
 
-        self.pub.send(b"")
+        logger.debug("ACKing poison pill with source")
+        self.source_rep.recv()
+        self.source_rep.send(b"")
+
+        logger.debug("VentilatorSink :: Sending poison pill")
+
+        pill_acks = 0
+        self.syncsubs.rcvtimeo = 1000
+        while pill_acks < self.nsubs:
+            self.pub.send(b"")
+            try:
+                self.syncsubs.recv()
+                self.syncsubs.send(b"")
+                pill_acks += 1
+            except zmq.ZMQError as e:
+                if e.errno == zmq.EAGAIN:
+                    pass
+                else:
+                    raise
+
+        logger.debug("VentilatorSink :: Exiting")
 
 
 class Worker:
@@ -203,6 +253,8 @@ class Worker:
         self.sub = self.context.socket(zmq.SUB)
         self.sub.connect(subaddr)
         self.sub.setsockopt_string(zmq.SUBSCRIBE, subfilter)
+        self.sub.sndhwm = 0
+        self.sub.rcvhwm = 0
 
         # REQ to sync with producer
         self.req = self.context.socket(zmq.REQ)
@@ -210,7 +262,8 @@ class Worker:
 
         # PUB to publish transformed data to
         self.pub = self.context.socket(zmq.PUB)
-        self.pub.sndhwm = 1100000
+        self.pub.sndhwm = 0
+        self.pub.rcvhwm = 0
         self.pub.bind(pubaddr)
 
         # REP to sync with subscribers
@@ -243,7 +296,7 @@ class Worker:
 
         logger.debug("Worker :: resolving %s dependencies", len(self.deps))
         final_deps = {}
-        _deps_subs = {}
+        # _deps_subs = {}
 
         for dep_name, dep_sync, dep_sub in self.deps:
             logger.debug("Worker :: %s result: %s sub: %s", dep_name, dep_sync, dep_sub)
@@ -251,15 +304,27 @@ class Worker:
             _sub = zmq.Context.instance().socket(zmq.SUB)
             _sub.connect(dep_sub)
             _sub.setsockopt_string(zmq.SUBSCRIBE, "")
-            _deps_subs[dep_name] = _sub
+            _sub.sndhwm = 0
+            _sub.rcvhwm = 0
+
+            # Let's keep it simple: deps can only return scalars
+            # _deps_subs[dep_name] = _sub
 
             _dep_sync = zmq.Context.instance().socket(zmq.REQ)
             _dep_sync.connect(dep_sync)
             _dep_sync.send(b"")
             _dep_sync.recv()
 
-        for dep_name, sub in _deps_subs.items():
-            final_deps[dep_name] = json.loads(sub.recv().decode())
+            final_deps[dep_name] = json.loads(_sub.recv().decode())
+
+            while _sub.recv() != b"":
+                pass
+
+            _dep_sync.send(b"")
+            _dep_sync.recv()
+
+        # for dep_name, sub in _deps_subs.items():
+        #    final_deps[dep_name] = json.loads(sub.recv().decode())
 
         logger.debug("Worker :: Running executor")
         # Thingy to execute
@@ -269,8 +334,24 @@ class Worker:
 
         executor.run()
 
+        logger.debug("ACKing poison pill")
+        self.req.send(b"")
+        self.req.recv()
+
         logger.debug("Worker :: Sending poison pill")
-        self.pub.send(b"")
+        pill_acks = 0
+        self.syncsubs.rcvtimeo = 1000
+        while pill_acks < self.nsubs:
+            self.pub.send(b"")
+            try:
+                self.syncsubs.recv()
+                self.syncsubs.send(b"")
+                pill_acks += 1
+            except zmq.ZMQError as e:
+                if e.errno == zmq.EAGAIN:
+                    pass
+                else:
+                    raise
 
         logger.debug("Worker :: Exiting")
 
@@ -292,7 +373,8 @@ class Joiner:
 
         # PUB to publish joined data to
         self.pub = self.context.socket(zmq.PUB)
-        self.pub.sndhwm = 1100000
+        self.pub.sndhwm = 0
+        self.pub.rcvhwm = 0
         self.pub.bind(pubaddr)
 
         # REP to sync with subscribers
@@ -303,13 +385,24 @@ class Joiner:
         # Subscriptions
         self.sub = self.context.socket(zmq.SUB)
         self.sub.setsockopt_string(zmq.SUBSCRIBE, "")
+        self.sub.sndhwm = 0
+        self.sub.rcvhwm = 0
 
         self.inputs = inputs
 
+        self.req_sckt = self.context.socket(zmq.REQ)
+        for dep_sync, dep_sub in self.inputs:
+            self.sub.connect(dep_sub)
+            self.req_sckt.connect(dep_sync)
+
         if executor_kwargs is None:
             executor_kwargs = dict()
+
         self.executor = executor_cls(
-            task_in=self.sub, task_out=self.pub, **executor_kwargs
+            task_in=self.sub,
+            task_out=self.pub,
+            req_sckt=self.req_sckt,
+            **executor_kwargs,
         )
 
     def run(self):
@@ -322,19 +415,28 @@ class Joiner:
             logger.debug(f"Joiner :: +1 subscriber ({subs}/{self.nsubs})")
 
         logger.debug("Joiner :: Syncing with all inputs")
-        req_sckt = self.context.socket(zmq.REQ)
-        for dep_sync, dep_sub in self.inputs:
-            self.sub.connect(dep_sub)
-            req_sckt.connect(dep_sync)
 
         for _ in range(len(self.inputs)):
-            req_sckt.send(b"")
-            req_sckt.recv()
+            self.req_sckt.send(b"")
+            self.req_sckt.recv()
 
         logger.debug("Joiner :: Running executor")
         self.executor.run()
 
         logger.debug("Joiner :: Sending poison pill")
-        self.pub.send(b"")
+
+        pill_acks = 0
+        self.syncsubs.rcvtimeo = 1000
+        while pill_acks < self.nsubs:
+            self.pub.send(b"")
+            try:
+                self.syncsubs.recv()
+                self.syncsubs.send(b"")
+                pill_acks += 1
+            except zmq.ZMQError as e:
+                if e.errno == zmq.EAGAIN:
+                    pass
+                else:
+                    raise
 
         logger.debug("Joiner :: Exiting")

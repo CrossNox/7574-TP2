@@ -1,18 +1,18 @@
 # pylint: disable=redefined-outer-name
 
 import json
-import tempfile
 import multiprocessing as mp
+import tempfile
 
-import pytest
 from pkg_resources import resource_filename
+import pytest
 
 from rma.tasks.base import Worker
-from rma.tasks.sinks import FileSink
-from rma.utils import config_logging
-from rma.tasks.sources import CSVSource
 from rma.tasks.filters import FilterPostsScoreAboveMean
+from rma.tasks.sinks import FileSink
+from rma.tasks.sources import CSVSource
 from rma.tasks.transforms import FilterColumn, PostsScoreMean
+from rma.utils import config_logging
 
 # source >> filter_col1
 # source >> filter_col2
@@ -130,7 +130,7 @@ def file_sink_2():
 
 
 def setup_function(_function):
-    config_logging(1, False)
+    config_logging(2, False)
 
 
 def test_dag_deps(

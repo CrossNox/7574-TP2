@@ -22,7 +22,6 @@ class Source(Node):
         self.repport = repport
         self.volumes = volumes or []
 
-
     @property
     def config(self):
         data = {self.node_id: deepcopy(BASE_DATA)}

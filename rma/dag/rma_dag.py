@@ -14,14 +14,16 @@ posts_source = Source(
     "posts_source_csv",
     "csv",
     ["/data/posts.csv"],
-    volumes=["../notebooks/data/the-reddit-irl-dataset-posts.csv:/data/posts.csv"],
+    volumes=[
+        "../notebooks/data/the-reddit-irl-dataset-posts-reduced.csv:/data/posts.csv"
+    ],
 )
 comments_source = Source(
     "comments_source_csv",
     "csv",
     ["/data/comments.csv"],
     volumes=[
-        "../notebooks/data/the-reddit-irl-dataset-comments.csv:/data/comments.csv"
+        "../notebooks/data/the-reddit-irl-dataset-comments-reduced.csv:/data/comments.csv"
     ],
 )
 # ===================================================================== Posts top path

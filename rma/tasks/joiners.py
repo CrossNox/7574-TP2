@@ -8,12 +8,12 @@ logger = get_logger(__name__)
 
 
 class KeyJoin(Executor):
-    def __init__(self, ninputs: int, key: str, *args, **kwargs):
+    def __init__(self, ninputs: int, key: str, req_sckt, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.key = key
         self.inputs = ninputs
         self.joins: Dict[str, Dict[str, str]] = dict()
-        self.nprocessed = 0
+        self.req_sckt = req_sckt
 
     @classmethod
     def merge_dicts(cls, a, b):
@@ -22,9 +22,6 @@ class KeyJoin(Executor):
         return z
 
     def handle_msg(self, msg):
-        self.nprocessed += 1
-        if (self.nprocessed % 25_000) == 0:
-            logger.info("KeyJoin :: %s messages processed", self.nprocessed)
 
         if msg[self.key] in self.joins:
             old_dict = self.joins[msg[self.key]]
@@ -48,6 +45,10 @@ class KeyJoin(Executor):
                 # Does breaking here apply in all out-of-order-scenarios?
                 # TODO: look this and comment the conclusion
                 # Intuition: we __might__ get all A, PP(A), then B, PP(B)
+                logger.debug("ACKing poison pill")
+                self.req_sckt.send(b"")
+                self.req_sckt.recv()
+                logger.debug("Poison pill ACKd")
                 pills += 1
             else:
                 msg = json.loads(s.decode())

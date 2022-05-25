@@ -20,7 +20,7 @@ class VentilatorBlock(Node):
         node_id: str,
         cmd: str,
         cmd_args: Optional[List[str]] = None,
-        nworkers: int = 2,
+        nworkers: int = 3,
         subport: int = DEFAULT_SUBPORT,
         reqport: int = DEFAULT_REQPORT,
         pubport: int = DEFAULT_PUBPORT,

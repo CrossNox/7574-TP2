@@ -1,8 +1,8 @@
 import abc
 import json
 
-import zmq
 import requests
+import zmq
 
 from rma.utils import get_logger
 
@@ -17,10 +17,14 @@ class Sink(abc.ABC):
         self.receiver = self.context.socket(zmq.SUB)
         self.receiver.connect(addrin)
         self.receiver.setsockopt_string(zmq.SUBSCRIBE, "")
+        self.receiver.sndhwm = 0
+        self.receiver.rcvhwm = 0
 
         # REQ to sync with ventilator sink
         self.syncclient = self.context.socket(zmq.REQ)
         self.syncclient.connect(syncaddr)
+
+        self.nprocessed = 0
 
     @abc.abstractmethod
     def sink(self, msg):
@@ -45,8 +49,15 @@ class Sink(abc.ABC):
 
             msg = json.loads(s.decode())
             self.sink(msg)
+            self.nprocessed += 1
+
+            if (self.nprocessed % 10_000) == 0:
+                logger.debug("Sunk %s messages", self.nprocessed)
 
         self.final_stmt()
+
+        self.syncclient.send(b"")
+        self.syncclient.recv()
 
 
 class PrintSink(Sink):
