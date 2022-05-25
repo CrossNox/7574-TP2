@@ -7,4 +7,4 @@ COPY rma /app/rma
 WORKDIR /app
 RUN poetry install --no-dev --no-root
 RUN poetry install --no-dev
-ENTRYPOINT ["poetry", "run", "rma", "-v"]
+ENTRYPOINT ["poetry", "run", "rma", "-vv"]
