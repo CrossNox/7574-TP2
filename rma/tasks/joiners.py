@@ -9,6 +9,12 @@ logger = get_logger(__name__)
 
 class KeyJoin(Executor):
     def __init__(self, ninputs: int, key: str, req_sckt, *args, **kwargs):
+        if ninputs != 2:
+            # Due to the fact that:
+            # - We don't know the full schema
+            # - Keep no record of how many updates we did on each key
+            # TODO: improve this
+            raise ValueError("This implementation can only handle two-way joins")
         super().__init__(*args, **kwargs)
         self.key = key
         self.inputs = ninputs
@@ -27,6 +33,7 @@ class KeyJoin(Executor):
             old_dict = self.joins[msg[self.key]]
             dict_merge = KeyJoin.merge_dicts(old_dict, msg)
             self.task_out.send(json.dumps(dict_merge).encode())
+            del self.joins[msg[self.key]]
         else:
             self.joins[msg[self.key]] = msg
 
