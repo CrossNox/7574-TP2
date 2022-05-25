@@ -41,7 +41,7 @@ class DAG(Node):
         }
         return data
 
-    def plot(self):
+    def plot(self, location):
         dot = graphviz.Digraph(
             "DAG",
             comment="DAG rendered to a docker-compose file",
@@ -73,4 +73,4 @@ class DAG(Node):
 
             pending.extend(next_pending.children)
 
-        dot.render(directory="doctest-output")
+        dot.render(directory=location)

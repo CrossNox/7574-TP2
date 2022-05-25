@@ -1,9 +1,12 @@
+from pathlib import Path
 from typing import Any, Dict
 
+import yaml
 import typer
 
 from rma.cli.join import app as join_app
 from rma.cli.sink import app as sink_app
+from rma.dag.rma_dag import build_rma_dag
 from rma.cli.filter import app as filter_app
 from rma.cli.source import app as source_app
 from rma.cli.transform import app as transform_app
@@ -37,6 +40,27 @@ def main(
     ),
 ):
     config_logging(verbose, pretty)
+
+
+@app.command()
+def render_dag(
+    docker_compose_output: Path = typer.Argument(
+        ..., help="Location where to output the docker compose file"
+    ),
+    dag_plot_output: Path = typer.Argument(
+        ..., help="Location where to save the graphviz plot of the DAG"
+    ),
+    nworkers: int = typer.Argument(3, help="The amount of workers to use"),
+):
+    if not docker_compose_output.is_dir():
+        raise ValueError("The docker compose output should be a folder")
+    if not dag_plot_output.is_dir():
+        raise ValueError("The dag plot output should be a folder")
+    dag = build_rma_dag(nworkers=nworkers)
+    with open(docker_compose_output / "docker-compose.yaml", "w") as f:
+        yaml.safe_dump(dag.config, f, indent=2, width=188)
+
+    dag.plot(dag_plot_output)
 
 
 if __name__ == "__main__":

@@ -604,4 +604,3 @@ services:
     - testing_net
     volumes: []
 version: '3'
-
