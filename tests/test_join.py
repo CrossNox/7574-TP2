@@ -1,17 +1,17 @@
 # pylint: disable=redefined-outer-name
 
 import json
-import multiprocessing as mp
 import tempfile
+import multiprocessing as mp
 
-from pkg_resources import resource_filename
 import pytest
+from pkg_resources import resource_filename
 
 from rma.tasks.base import Joiner
-from rma.tasks.joiners import KeyJoin
 from rma.tasks.sinks import FileSink
-from rma.tasks.sources import CSVSource
 from rma.utils import config_logging
+from rma.tasks.joiners import KeyJoin
+from rma.tasks.sources import CSVSource
 
 
 @pytest.fixture

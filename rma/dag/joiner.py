@@ -1,14 +1,14 @@
 from copy import deepcopy
 from typing import List, Optional
 
+from rma.dag.node import BASE_DATA, Node
+from rma.dag.ventilator import VentilatorBlock
 from rma.constants import (
     DEFAULT_PUBPORT,
     DEFAULT_REPPORT,
     DEFAULT_REQPORT,
     DEFAULT_SUBPORT,
 )
-from rma.dag.node import BASE_DATA, Node
-from rma.dag.ventilator import VentilatorBlock
 
 
 class DAGJoiner(Node):

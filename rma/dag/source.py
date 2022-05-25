@@ -1,8 +1,8 @@
 from copy import deepcopy
 from typing import List, Optional
 
-from rma.constants import DEFAULT_PUBPORT, DEFAULT_REPPORT
 from rma.dag.node import BASE_DATA, Node
+from rma.constants import DEFAULT_PUBPORT, DEFAULT_REPPORT
 
 
 class Source(Node):

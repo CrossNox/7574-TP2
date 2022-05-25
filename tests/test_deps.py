@@ -1,18 +1,18 @@
 # pylint: disable=redefined-outer-name
 
 import json
-import multiprocessing as mp
 import tempfile
+import multiprocessing as mp
 
-from pkg_resources import resource_filename
 import pytest
+from pkg_resources import resource_filename
 
 from rma.tasks.base import Worker
-from rma.tasks.filters import FilterPostsScoreAboveMean
 from rma.tasks.sinks import FileSink
-from rma.tasks.sources import CSVSource
-from rma.tasks.transforms import FilterColumn, PostsScoreMean
 from rma.utils import config_logging
+from rma.tasks.sources import CSVSource
+from rma.tasks.filters import FilterPostsScoreAboveMean
+from rma.tasks.transforms import FilterColumn, PostsScoreMean
 
 # source >> filter_col1
 # source >> filter_col2

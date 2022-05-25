@@ -1,6 +1,7 @@
 from copy import deepcopy
 from typing import List, Optional
 
+from rma.dag.node import BASE_DATA, Node
 from rma.constants import (
     V_W_PUSH_PORT,
     V_SRC_REP_PORT,
@@ -11,7 +12,6 @@ from rma.constants import (
     DEFAULT_SUBPORT,
     V_SRC_PUSH_PORT,
 )
-from rma.dag.node import BASE_DATA, Node
 
 
 class VentilatorBlock(Node):

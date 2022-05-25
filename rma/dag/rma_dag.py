@@ -2,11 +2,11 @@
 import yaml
 
 from rma.dag.dag import DAG
-from rma.dag.joiner import DAGJoiner
 from rma.dag.sink import Sink
 from rma.dag.source import Source
-from rma.dag.ventilator import VentilatorBlock
 from rma.dag.worker import Worker
+from rma.dag.joiner import DAGJoiner
+from rma.dag.ventilator import VentilatorBlock
 
 # ===================================================================== Start
 dag = DAG("DAG")
@@ -84,7 +84,13 @@ dag >> comments_source
 
 posts_source >> filter_posts_cols_top >> filter_null_url >> join_download_meme
 posts_source >> filter_posts_cols_middle >> posts_score_mean
-posts_source >> filter_posts_cols_bottom >> filter_posts_above_mean_score >> filter_null_url_bottom >> join_dump_posts_urls
+(
+    posts_source
+    >> filter_posts_cols_bottom
+    >> filter_posts_above_mean_score
+    >> filter_null_url_bottom
+    >> join_dump_posts_urls
+)
 posts_score_mean > filter_posts_above_mean_score  # add dependency
 
 (
