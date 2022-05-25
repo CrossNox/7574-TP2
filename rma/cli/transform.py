@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import List
 
 import typer
 
@@ -15,8 +15,6 @@ logger = get_logger(__name__)
 
 app = typer.Typer()
 
-state: Dict[str, Union[str, int]] = {}
-
 
 @app.command()
 def posts_score_mean(
@@ -24,7 +22,7 @@ def posts_score_mean(
     reqaddr: str,
     pubaddr: str,
     repaddr: str,
-    nsubs: int = 1,
+    nsubs: int,
 ):
     worker = Worker(
         subaddr=subaddr,
@@ -43,7 +41,7 @@ def mean_sentiment(
     reqaddr: str,
     pubaddr: str,
     repaddr: str,
-    nsubs: int = 1,
+    nsubs: int,
 ):
     worker = Worker(
         subaddr=subaddr,
@@ -57,25 +55,32 @@ def mean_sentiment(
 
 
 @app.command()
-def filter_columns(columns: List[str]):
+def filter_columns(
+    pulladdr: str = typer.Argument(..., help="The address to pull data from"),
+    reqaddr: str = typer.Argument(..., help="The address to ack the ventilator"),
+    pushaddr: str = typer.Argument(..., help="The address to push data to"),
+    columns: List[str] = typer.Argument(..., help="Columns to keep"),
+):
     worker = VentilatorWorker(
-        **state, executor_cls=FilterColumn, executor_kwargs={"columns": columns}
+        pulladdr=pulladdr,
+        reqaddr=reqaddr,
+        pushaddr=pushaddr,
+        executor_cls=FilterColumn,
+        executor_kwargs={"columns": columns},
     )
     worker.run()
 
 
 @app.command()
-def extract_post_id():
-    worker = VentilatorWorker(**state, executor_cls=ExtractPostID)
-    worker.run()
-
-
-@app.callback()
-def main(
+def extract_post_id(
     pulladdr: str = typer.Argument(..., help="The address to pull data from"),
     reqaddr: str = typer.Argument(..., help="The address to ack the ventilator"),
     pushaddr: str = typer.Argument(..., help="The address to push data to"),
 ):
-    state["pulladdr"] = pulladdr
-    state["reqaddr"] = reqaddr
-    state["pushaddr"] = pushaddr
+    worker = VentilatorWorker(
+        pulladdr=pulladdr,
+        reqaddr=reqaddr,
+        pushaddr=pushaddr,
+        executor_cls=ExtractPostID,
+    )
+    worker.run()

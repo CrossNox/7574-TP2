@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Union
+from typing import List
 
 import typer
 
@@ -10,30 +10,23 @@ logger = get_logger(__name__)
 
 app = typer.Typer()
 
-state: Dict[str, Union[str, int, List[Tuple[str, str]]]] = {}
-
 
 @app.command()
-def bykey(key: str = typer.Argument(..., help="The key on which to join")):
-    joiner = Joiner(
-        **state,
-        executor_cls=KeyJoin,
-        executor_kwargs={"ninputs": len(state["inputs"]), "key": key}  # type: ignore
-    )
-    joiner.run()
-
-
-@app.callback()
-def main(
+def bykey(
     pubaddr: str = typer.Argument(..., help="The address to publish data to"),
     repaddr: str = typer.Argument(..., help="The address to sync with subscribers"),
-    subaddr: List[str] = typer.Argument(..., help="The addresses to pull data from"),
-    reqaddr: List[str] = typer.Argument(
-        ..., help="The addresses to ack the publishers"
-    ),
     nsubs: int = typer.Argument(..., help="Number of subscribers"),
+    subaddr: List[str] = typer.Option(..., help="The addresses to pull data from"),
+    reqaddr: List[str] = typer.Option(..., help="The addresses to ack the publishers"),
+    key: str = typer.Argument(..., help="The key on which to join"),
 ):
-    state["pubaddr"] = pubaddr
-    state["subsyncaddr"] = repaddr
-    state["inputs"] = list(zip(reqaddr, subaddr))
-    state["nsubs"] = nsubs
+    inputs = list(zip(reqaddr, subaddr))
+    joiner = Joiner(
+        pubaddr=pubaddr,
+        repaddr=repaddr,
+        nsubs=nsubs,
+        inputs=inputs,
+        executor_cls=KeyJoin,
+        executor_kwargs={"ninputs": len(inputs), "key": key},  # type: ignore
+    )
+    joiner.run()

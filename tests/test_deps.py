@@ -130,7 +130,7 @@ def file_sink_2():
 
 
 def setup_function(_function):
-    config_logging(1, False)
+    config_logging(2, False)
 
 
 def test_dag_deps(

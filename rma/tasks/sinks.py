@@ -17,10 +17,14 @@ class Sink(abc.ABC):
         self.receiver = self.context.socket(zmq.SUB)
         self.receiver.connect(addrin)
         self.receiver.setsockopt_string(zmq.SUBSCRIBE, "")
+        self.receiver.sndhwm = 0
+        self.receiver.rcvhwm = 0
 
         # REQ to sync with ventilator sink
         self.syncclient = self.context.socket(zmq.REQ)
         self.syncclient.connect(syncaddr)
+
+        self.nprocessed = 0
 
     @abc.abstractmethod
     def sink(self, msg):
@@ -30,23 +34,30 @@ class Sink(abc.ABC):
         pass
 
     def run(self):
-        logger.info("Sink :: syncing with source")
+        logger.debug("Sink :: syncing with source")
         self.syncclient.send(b"")
         self.syncclient.recv()
 
-        logger.info("Sink :: running loop")
+        logger.debug("Sink :: running loop")
         while True:
             s = self.receiver.recv()
-            logger.info("Sink :: Got message")
+            # logger.debug("Sink :: Got message")
 
             if s == b"":
-                logger.info("Sink :: got poison pill")
+                logger.debug("Sink :: got poison pill")
                 break
 
             msg = json.loads(s.decode())
             self.sink(msg)
+            self.nprocessed += 1
+
+            if (self.nprocessed % 10_000) == 0:
+                logger.debug("Sunk %s messages", self.nprocessed)
 
         self.final_stmt()
+
+        self.syncclient.send(b"")
+        self.syncclient.recv()
 
 
 class PrintSink(Sink):
@@ -61,7 +72,7 @@ class FileSink(Sink):
         self.messages = 0
 
     def sink(self, msg):
-        logger.info("Sink :: Message number %s received", self.messages)
+        logger.debug("Sink :: Message number %s received", self.messages)
         self.messages += 1
         with open(self.path, "a") as f:
             f.write(json.dumps(msg))

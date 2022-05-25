@@ -15,6 +15,7 @@ class Source(abc.ABC):
 
         # PUB to publish data
         self.sender = self.context.socket(zmq.PUB)
+        self.sender.sndhwm = 0
         self.sender.bind(addrout)
 
         # REP to sync with all subscribers
@@ -23,37 +24,56 @@ class Source(abc.ABC):
 
         self.nsubs = nsubs
 
-        logger.info("Source :: dumping into %s", addrout)
-        logger.info("Source :: sync addr %s", addrsync)
+        logger.debug("Source :: dumping into %s", addrout)
+        logger.debug("Source :: sync addr %s", addrsync)
 
     @abc.abstractmethod
     def gen(self):
         pass
 
     def run(self):
-        logger.info("Source :: syncing with subs")
+        logger.debug("Source :: syncing with subs")
         subs = 0
         while subs < self.nsubs:
             _ = self.syncservice.recv()
             self.syncservice.send(b"")
             subs += 1
-            logger.info(f"Source :: +1 subscriber ({subs}/{self.nsubs})")
+            logger.debug(f"Source :: +1 subscriber ({subs}/{self.nsubs})")
 
-        logger.info("Source: generating")
+        logger.debug("Source: generating")
         for thing in self.gen():
             self.sender.send(json.dumps(thing).encode())
 
-        logger.info("Source :: Sending poison pill")
-        self.sender.send(b"")
+        logger.debug("Source :: Sending poison pill")
+
+        pill_acks = 0
+        self.syncservice.rcvtimeo = 1000
+        while pill_acks < self.nsubs:
+            self.sender.send(b"")
+            try:
+                self.syncservice.recv()
+                self.syncservice.send(b"")
+                pill_acks += 1
+            except zmq.ZMQError as e:
+                if e.errno == zmq.EAGAIN:
+                    pass
+                else:
+                    raise
+
+        logger.debug("Source :: Exiting")
 
 
 class CSVSource(Source):
     def __init__(self, path, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.path = path
+        self.ngen = 0
 
     def gen(self):
         with open(self.path, newline="") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
+                self.ngen += 1
+                if (self.ngen % 10_000) == 0:
+                    logger.info("%s messages sent", self.ngen)
                 yield row

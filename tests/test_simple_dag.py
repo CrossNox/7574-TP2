@@ -59,7 +59,7 @@ def file_sink():
 
 
 def setup_function(_function):
-    config_logging(1, False)
+    config_logging(2, False)
 
 
 def test_dag_1(comments_source, filter_comments_cols, file_sink):

@@ -47,7 +47,7 @@ def join():
     def _run():
         thing = Joiner(
             pubaddr="tcp://*:6054",
-            subsyncaddr="tcp://*:6055",
+            repaddr="tcp://*:6055",
             nsubs=1,
             inputs=[
                 ("tcp://localhost:6051", "tcp://localhost:6050"),
@@ -75,7 +75,7 @@ def file_sink():
 
 
 def setup_function(_function):
-    config_logging(1, False)
+    config_logging(2, False)
 
 
 def test_join(source1, source2, join, file_sink):

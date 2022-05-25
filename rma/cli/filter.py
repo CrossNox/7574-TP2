@@ -1,5 +1,3 @@
-from typing import Dict, Union
-
 import typer
 
 from rma.utils import get_logger
@@ -16,8 +14,6 @@ logger = get_logger(__name__)
 
 app = typer.Typer()
 
-state: Dict[str, Union[str, int]] = {}
-
 
 @app.command()
 def uniq_posts(
@@ -25,7 +21,7 @@ def uniq_posts(
     reqaddr: str,
     pubaddr: str,
     repaddr: str,
-    nsubs: int = 1,
+    nsubs: int,
 ):
     # TODO: this is a limitation design
     # A ventilator worker should be able to declare dependencies
@@ -46,9 +42,9 @@ def posts_score_above_mean(
     reqaddr: str,
     pubaddr: str,
     repaddr: str,
+    nsubs: int,
     meansyncaddr: str,
     meansubaddr: str,
-    nsubs: int = 1,
 ):
     # TODO: this is a limitation design
     # A ventilator worker should be able to declare dependencies
