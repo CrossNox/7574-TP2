@@ -1219,7 +1219,7 @@ python-versions = ">=3.7"
 name = "pyyaml"
 version = "6.0"
 description = "YAML parser and emitter for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 
@@ -1577,7 +1577,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.9"
-content-hash = "e5106ce96a399ac30dbb6cf1661c98c553642d1a82d0c428a2a4506e902f3b8b"
+content-hash = "fce72e8d71d6e296a30d3c719b73e617acf6adfeb76bab6a81243197a6efd121"
 
 [metadata.files]
 anyio = [
