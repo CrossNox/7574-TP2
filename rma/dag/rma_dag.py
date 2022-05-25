@@ -13,20 +13,14 @@ def build_rma_dag(nworkers: int = 3):
     # ===================================================================== Start
     dag = DAG("DAG")
     posts_source = Source(
-        "posts_source_csv",
-        "csv",
-        ["/data/posts.csv"],
-        volumes=[
-            "../notebooks/data/the-reddit-irl-dataset-posts-reduced.csv:/data/posts.csv"
-        ],
+        "posts_source",
+        "zmqrelay",
+        ["5555"],
     )
     comments_source = Source(
-        "comments_source_csv",
-        "csv",
-        ["/data/comments.csv"],
-        volumes=[
-            "../notebooks/data/the-reddit-irl-dataset-comments-reduced.csv:/data/comments.csv"
-        ],
+        "comments_source",
+        "zmqrelay",
+        ["7777"],
     )
 
     # ===================================================================== Posts top path

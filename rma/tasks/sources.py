@@ -63,6 +63,27 @@ class Source(abc.ABC):
         logger.debug("Source :: Exiting")
 
 
+class ZMQRelaySource(Source):
+    def __init__(self, port, addrout, addrsync, nsubs: int):
+        super().__init__(addrout=addrout, addrsync=addrsync, nsubs=nsubs)
+        self.context = zmq.Context.instance()  # type: ignore
+
+        # REP to get relay data
+        self.rep = self.context.socket(zmq.REP)
+        self.rep.bind(f"tcp://*:{port}")
+
+        logger.info("ZMQ Relaying at port %s", port)
+
+    def gen(self):
+        while True:
+            s = self.rep.recv()
+            if s == b"":
+                return
+            self.rep.send(b"")
+            # TODO: avoid decode/encode
+            yield json.loads(s.decode())
+
+
 class CSVSource(Source):
     def __init__(self, path, *args, **kwargs):
         super().__init__(*args, **kwargs)

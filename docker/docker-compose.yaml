@@ -4,17 +4,17 @@ networks:
       config:
       - subnet: 172.25.125.0/24
       driver: default
+    name: testing_net
 services:
-  comments_source_csv:
-    command: source tcp://*:5000 tcp://*:6000 2 csv /data/comments.csv
-    container_name: comments_source_csv
+  comments_source:
+    command: source tcp://*:5000 tcp://*:6000 2 zmqrelay 7777
+    container_name: comments_source
     environment:
     - PYTHONUNBUFFERED=1
     image: 7574-tp2:latest
     networks:
     - testing_net
-    volumes:
-    - ../notebooks/data/the-reddit-irl-dataset-comments-reduced.csv:/data/comments.csv
+    volumes: []
   extract_post_id_bottom_1_worker:
     command: transform extract-post-id tcp://extract_post_id_bottom_src:8000 tcp://extract_post_id_bottom_src:8001 tcp://extract_post_id_bottom_sink:8003
     container_name: extract_post_id_bottom_1_worker
@@ -142,7 +142,7 @@ services:
     - testing_net
     volumes: []
   filter_comments_cols_bottom_src:
-    command: ventilate source tcp://comments_source_csv:5000 tcp://comments_source_csv:6000 tcp://*:8000 tcp://*:8001 tcp://filter_comments_cols_bottom_sink:8002 3
+    command: ventilate source tcp://comments_source:5000 tcp://comments_source:6000 tcp://*:8000 tcp://*:8001 tcp://filter_comments_cols_bottom_sink:8002 3
     container_name: filter_comments_cols_bottom_src
     environment:
     - PYTHONUNBUFFERED=1
@@ -187,7 +187,7 @@ services:
     - testing_net
     volumes: []
   filter_comments_cols_side_src:
-    command: ventilate source tcp://comments_source_csv:5000 tcp://comments_source_csv:6000 tcp://*:8000 tcp://*:8001 tcp://filter_comments_cols_side_sink:8002 3
+    command: ventilate source tcp://comments_source:5000 tcp://comments_source:6000 tcp://*:8000 tcp://*:8001 tcp://filter_comments_cols_side_sink:8002 3
     container_name: filter_comments_cols_side_src
     environment:
     - PYTHONUNBUFFERED=1
@@ -421,7 +421,7 @@ services:
     - testing_net
     volumes: []
   filter_posts_cols_bottom_src:
-    command: ventilate source tcp://posts_source_csv:5000 tcp://posts_source_csv:6000 tcp://*:8000 tcp://*:8001 tcp://filter_posts_cols_bottom_sink:8002 3
+    command: ventilate source tcp://posts_source:5000 tcp://posts_source:6000 tcp://*:8000 tcp://*:8001 tcp://filter_posts_cols_bottom_sink:8002 3
     container_name: filter_posts_cols_bottom_src
     environment:
     - PYTHONUNBUFFERED=1
@@ -466,7 +466,7 @@ services:
     - testing_net
     volumes: []
   filter_posts_cols_middle_src:
-    command: ventilate source tcp://posts_source_csv:5000 tcp://posts_source_csv:6000 tcp://*:8000 tcp://*:8001 tcp://filter_posts_cols_middle_sink:8002 3
+    command: ventilate source tcp://posts_source:5000 tcp://posts_source:6000 tcp://*:8000 tcp://*:8001 tcp://filter_posts_cols_middle_sink:8002 3
     container_name: filter_posts_cols_middle_src
     environment:
     - PYTHONUNBUFFERED=1
@@ -511,7 +511,7 @@ services:
     - testing_net
     volumes: []
   filter_posts_cols_top_src:
-    command: ventilate source tcp://posts_source_csv:5000 tcp://posts_source_csv:6000 tcp://*:8000 tcp://*:8001 tcp://filter_posts_cols_top_sink:8002 3
+    command: ventilate source tcp://posts_source:5000 tcp://posts_source:6000 tcp://*:8000 tcp://*:8001 tcp://filter_posts_cols_top_sink:8002 3
     container_name: filter_posts_cols_top_src
     environment:
     - PYTHONUNBUFFERED=1
@@ -566,16 +566,15 @@ services:
     networks:
     - testing_net
     volumes: []
-  posts_source_csv:
-    command: source tcp://*:5000 tcp://*:6000 3 csv /data/posts.csv
-    container_name: posts_source_csv
+  posts_source:
+    command: source tcp://*:5000 tcp://*:6000 3 zmqrelay 5555
+    container_name: posts_source
     environment:
     - PYTHONUNBUFFERED=1
     image: 7574-tp2:latest
     networks:
     - testing_net
-    volumes:
-    - ../notebooks/data/the-reddit-irl-dataset-posts-reduced.csv:/data/posts.csv
+    volumes: []
   sink_download_meme:
     command: sink tcp://join_download_meme:5000 tcp://join_download_meme:6000 top-post /outputs/top_meme
     container_name: sink_download_meme

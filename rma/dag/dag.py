@@ -35,7 +35,8 @@ class DAG(Node):
                     "ipam": {
                         "driver": "default",
                         "config": [{"subnet": "172.25.125.0/24"}],
-                    }
+                    },
+                    "name": "testing_net",
                 }
             },
         }

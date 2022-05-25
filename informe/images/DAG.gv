@@ -1,10 +1,10 @@
 // DAG rendered to a docker-compose file
 digraph DAG {
 	graph [rankdir=TB]
-	comments_source_csv
-	DAG -> comments_source_csv
+	comments_source
+	DAG -> comments_source
 	filter_comments_cols_side
-	comments_source_csv -> filter_comments_cols_side
+	comments_source -> filter_comments_cols_side
 	filter_nan_sentiment
 	filter_comments_cols_side -> filter_nan_sentiment
 	extract_post_id_side
@@ -17,7 +17,7 @@ digraph DAG {
 	sink_download_meme
 	join_download_meme -> sink_download_meme
 	filter_comments_cols_bottom
-	comments_source_csv -> filter_comments_cols_bottom
+	comments_source -> filter_comments_cols_bottom
 	filter_ed_comments
 	filter_comments_cols_bottom -> filter_ed_comments
 	extract_post_id_bottom
@@ -29,23 +29,23 @@ digraph DAG {
 	filter_unique_posts -> join_dump_posts_urls
 	sink_memes_url
 	join_dump_posts_urls -> sink_memes_url
-	posts_source_csv
-	DAG -> posts_source_csv
+	posts_source
+	DAG -> posts_source
 	filter_posts_cols_bottom
-	posts_source_csv -> filter_posts_cols_bottom
+	posts_source -> filter_posts_cols_bottom
 	filter_posts_above_mean_score
 	filter_posts_cols_bottom -> filter_posts_above_mean_score
 	posts_score_mean -> filter_posts_above_mean_score [style=dashed]
 	filter_null_url_bottom
 	filter_posts_above_mean_score -> filter_null_url_bottom
 	filter_posts_cols_middle
-	posts_source_csv -> filter_posts_cols_middle
+	posts_source -> filter_posts_cols_middle
 	posts_score_mean
 	filter_posts_cols_middle -> posts_score_mean
 	sink_mean_posts_score
 	posts_score_mean -> sink_mean_posts_score
 	filter_posts_cols_top
-	posts_source_csv -> filter_posts_cols_top
+	posts_source -> filter_posts_cols_top
 	filter_null_url
 	filter_posts_cols_top -> filter_null_url
 }

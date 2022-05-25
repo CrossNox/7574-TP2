@@ -143,3 +143,5 @@ _minted-informe/
 *.zip
 
 notebooks/data/*.csv
+
+outputs
