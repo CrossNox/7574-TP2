@@ -70,9 +70,15 @@ class FileSink(Sink):
         super().__init__(*args, **kwargs)
         self.path = path
         self.messages = 0
+        if self.path.exists():
+            self.path.unlink()
 
     def sink(self, msg):
-        logger.debug("Sink :: Message number %s received", self.messages)
+        logger.debug(
+            "Sink :: Message number %s received. Written to %s",
+            self.messages,
+            self.path,
+        )
         self.messages += 1
         with open(self.path, "a") as f:
             f.write(json.dumps(msg))
@@ -81,21 +87,26 @@ class FileSink(Sink):
 
 
 class TopPostDownload(Sink):
+    # TODO: this could be a filter + simple download
     def __init__(self, path, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.path = path
         self.top_meme = None
 
     def sink(self, msg):
-        if msg["url"] is None:
+        if msg["url"] is None or msg["url"] == "":
             return
 
-        if self.top_meme is None or float(self.top_meme["mean_sentiment"]) >= float(
+        if "reddit.com/r" in msg["url"]:
+            return
+
+        if self.top_meme is None or float(self.top_meme["mean_sentiment"]) <= float(
             msg["mean_sentiment"]
         ):
             self.top_meme = msg
 
     def final_stmt(self):
+        logger.info("Downloading meme %s to %s", self.top_meme, self.path)
         with open(self.path, "wb") as f:
             res = requests.get(self.top_meme["url"])
             res.raise_for_status()

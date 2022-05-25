@@ -95,9 +95,24 @@ def build_rma_dag(nworkers: int = 3):
     join_download_meme = DAGJoiner("join_download_meme", "bykey", ["id"])
 
     # ===================================================================== Sink
-    memes_url_sink = Sink("sink_memes_url", "printmsg")
-    mean_posts_score_sink = Sink("sink_mean_posts_score", "printmsg")
-    download_meme_sink = Sink("sink_download_meme", "printmsg")
+    memes_url_sink = Sink(
+        "sink_memes_url",
+        "tofile",
+        ["/outputs/edmemes.jsonl"],
+        volumes=["../outputs:/outputs"],
+    )
+    mean_posts_score_sink = Sink(
+        "sink_mean_posts_score",
+        "tofile",
+        ["/outputs/posts_score_mean.jsonl"],
+        volumes=["../outputs:/outputs"],
+    )
+    download_meme_sink = Sink(
+        "sink_download_meme",
+        "top-post",
+        ["/outputs/top_meme"],
+        volumes=["../outputs:/outputs"],
+    )
 
     dag >> posts_source
     dag >> comments_source

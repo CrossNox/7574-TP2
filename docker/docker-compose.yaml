@@ -577,30 +577,33 @@ services:
     volumes:
     - ../notebooks/data/the-reddit-irl-dataset-posts-reduced.csv:/data/posts.csv
   sink_download_meme:
-    command: sink tcp://join_download_meme:5000 tcp://join_download_meme:6000 printmsg
+    command: sink tcp://join_download_meme:5000 tcp://join_download_meme:6000 top-post /outputs/top_meme
     container_name: sink_download_meme
     environment:
     - PYTHONUNBUFFERED=1
     image: 7574-tp2:latest
     networks:
     - testing_net
-    volumes: []
+    volumes:
+    - ../outputs:/outputs
   sink_mean_posts_score:
-    command: sink tcp://posts_score_mean:5000 tcp://posts_score_mean:6000 printmsg
+    command: sink tcp://posts_score_mean:5000 tcp://posts_score_mean:6000 tofile /outputs/posts_score_mean.jsonl
     container_name: sink_mean_posts_score
     environment:
     - PYTHONUNBUFFERED=1
     image: 7574-tp2:latest
     networks:
     - testing_net
-    volumes: []
+    volumes:
+    - ../outputs:/outputs
   sink_memes_url:
-    command: sink tcp://join_dump_posts_urls:5000 tcp://join_dump_posts_urls:6000 printmsg
+    command: sink tcp://join_dump_posts_urls:5000 tcp://join_dump_posts_urls:6000 tofile /outputs/edmemes.jsonl
     container_name: sink_memes_url
     environment:
     - PYTHONUNBUFFERED=1
     image: 7574-tp2:latest
     networks:
     - testing_net
-    volumes: []
+    volumes:
+    - ../outputs:/outputs
 version: '3'
