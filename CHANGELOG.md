@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.2.0] - 2022-05-25
 ### Added
 - Client CLI to send lines in streaming
+- Source that relays messages to the system using ZMQ
 
 ## [2.1.2] - 2022-05-25
 ### Fixed
