@@ -2,18 +2,26 @@
 
 
 from rma.dag.dag import DAG
-from rma.dag.joiner import DAGJoiner
 from rma.dag.sink import Sink
 from rma.dag.source import Source
-from rma.dag.ventilator import VentilatorBlock
 from rma.dag.worker import Worker
+from rma.dag.joiner import DAGJoiner
+from rma.dag.ventilator import VentilatorBlock
 
 
 def build_rma_dag(nworkers: int = 3):
     # ===================================================================== Start
     dag = DAG("DAG")
-    posts_source = Source("posts_source", "zmqrelay", ["5555"],)
-    comments_source = Source("comments_source", "zmqrelay", ["7777"],)
+    posts_source = Source(
+        "posts_source",
+        "zmqrelay",
+        ["5555"],
+    )
+    comments_source = Source(
+        "comments_source",
+        "zmqrelay",
+        ["7777"],
+    )
 
     # ===================================================================== Posts top path
     filter_posts_cols_top = VentilatorBlock(

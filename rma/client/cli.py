@@ -1,10 +1,10 @@
 import csv
 import json
-import multiprocessing as mp
 from pathlib import Path
+import multiprocessing as mp
 
-import typer
 import zmq
+import typer
 
 from rma.utils import DEFAULT_PRETTY, DEFAULT_VERBOSE, get_logger, config_logging
 
@@ -14,7 +14,7 @@ app = typer.Typer()
 
 
 def relay_file(file_path: Path, addr: str):
-    ctx = zmq.Context.instance()
+    ctx = zmq.Context.instance()  # type: ignore
     req = ctx.socket(zmq.REQ)
     req.connect(addr)
     with open(file_path, newline="") as f:

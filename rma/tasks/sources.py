@@ -66,7 +66,7 @@ class Source(abc.ABC):
 class ZMQRelaySource(Source):
     def __init__(self, port, addrout, addrsync, nsubs: int):
         super().__init__(addrout=addrout, addrsync=addrsync, nsubs=nsubs)
-        self.context = zmq.Context.instance()
+        self.context = zmq.Context.instance()  # type: ignore
 
         # REP to get relay data
         self.rep = self.context.socket(zmq.REP)

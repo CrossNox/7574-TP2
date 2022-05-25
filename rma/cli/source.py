@@ -3,8 +3,8 @@ from typing import Dict, Union
 
 import typer
 
-from rma.tasks.sources import CSVSource, ZMQRelaySource
 from rma.utils import get_logger
+from rma.tasks.sources import CSVSource, ZMQRelaySource
 
 logger = get_logger(__name__)
 

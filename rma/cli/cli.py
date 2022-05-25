@@ -1,16 +1,16 @@
 from pathlib import Path
 from typing import Any, Dict
 
-import typer
 import yaml
+import typer
 
-from rma.cli.filter import app as filter_app
 from rma.cli.join import app as join_app
 from rma.cli.sink import app as sink_app
+from rma.dag.rma_dag import build_rma_dag
+from rma.cli.filter import app as filter_app
 from rma.cli.source import app as source_app
 from rma.cli.transform import app as transform_app
 from rma.cli.ventilate import app as ventilate_app
-from rma.dag.rma_dag import build_rma_dag
 from rma.utils import DEFAULT_PRETTY, DEFAULT_VERBOSE, get_logger, config_logging
 
 logger = get_logger(__name__)
