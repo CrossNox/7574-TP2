@@ -41,3 +41,8 @@ Desde la carpeta `docker`, ejecutar:
 ```bash
 docker-compose up --build
 ```
+
+## Ejecutar un cliente
+```bash
+docker run --network testing_net -v /home/nox/repos/fiuba/7574-DistribuidosI/7574-TP2/notebooks/data/the-reddit-irl-dataset-posts-reduced.csv:/data/posts.csv -v /home/nox/repos/fiuba/7574-DistribuidosI/7574-TP2/notebooks/data/the-reddit-irl-dataset-comments-reduced.csv:/data/comments.csv --entrypoint poetry 7574-tp2:latest run rma_client -vv /data/posts.csv /data/comments.csv tcp://posts_source:5555 tcp://comments_source:7777
+```

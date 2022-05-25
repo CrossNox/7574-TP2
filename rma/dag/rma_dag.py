@@ -2,32 +2,18 @@
 
 
 from rma.dag.dag import DAG
+from rma.dag.joiner import DAGJoiner
 from rma.dag.sink import Sink
 from rma.dag.source import Source
-from rma.dag.worker import Worker
-from rma.dag.joiner import DAGJoiner
 from rma.dag.ventilator import VentilatorBlock
+from rma.dag.worker import Worker
 
 
 def build_rma_dag(nworkers: int = 3):
     # ===================================================================== Start
     dag = DAG("DAG")
-    posts_source = Source(
-        "posts_source_csv",
-        "csv",
-        ["/data/posts.csv"],
-        volumes=[
-            "../notebooks/data/the-reddit-irl-dataset-posts-reduced.csv:/data/posts.csv"
-        ],
-    )
-    comments_source = Source(
-        "comments_source_csv",
-        "csv",
-        ["/data/comments.csv"],
-        volumes=[
-            "../notebooks/data/the-reddit-irl-dataset-comments-reduced.csv:/data/comments.csv"
-        ],
-    )
+    posts_source = Source("posts_source", "zmqrelay", ["5555"],)
+    comments_source = Source("comments_source", "zmqrelay", ["7777"],)
 
     # ===================================================================== Posts top path
     filter_posts_cols_top = VentilatorBlock(
