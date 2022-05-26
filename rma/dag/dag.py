@@ -2,6 +2,7 @@ import graphviz
 
 from rma.dag.node import Node
 from rma.dag.source import Source
+from rma.dag.ventilator import VentilatorBlock
 
 
 class DAG(Node):
@@ -57,7 +58,12 @@ class DAG(Node):
                 continue
 
             visited.add(next_pending.node_id)
-            dot.node(next_pending.node_id)
+
+            node_kwargs = {}
+            if isinstance(next_pending, VentilatorBlock):
+                node_kwargs["style"] = "dotted"
+
+            dot.node(next_pending.node_id, _attributes=node_kwargs)
 
             for parent in next_pending.parents:
                 dot.edge(parent.node_id, next_pending.node_id)
