@@ -36,6 +36,7 @@ def get_zmqsink_memes_url(manager_list, addr):
     ctx = zmq.Context.instance()  # type: ignore
     req = ctx.socket(zmq.REQ)
     req.connect(addr)
+
     while True:
         req.send(b"")
         s = req.recv()
@@ -44,8 +45,8 @@ def get_zmqsink_memes_url(manager_list, addr):
             break
 
         manager_list.append(json.loads(s.decode()))
-    req.send(b"")
-    req.recv()
+    # req.send(b"")
+    # req.recv()
 
 
 def get_zmq_mean_posts_score(manager_value, addr):
@@ -54,13 +55,24 @@ def get_zmq_mean_posts_score(manager_value, addr):
     req.connect(addr)
 
     logger.info("Requesting mean posts score")
-    req.send(b"")
-    manager_value.value = float(req.recv().decode())
+    while True:
+        req.send(b"")
+        s = req.recv()
 
-    logger.info("Sending ACK")
-    req.send(b"")
-    s = req.recv()
-    logger.info("MeanPostsScore :: Got %s", s.decode())
+        if s == b"":
+            break
+
+        else:
+            logger.info("Mean posts got %s", s.decode())
+            manager_value.value = float(s)
+
+    # req.send(b"")
+    # manager_value.value = float(req.recv().decode())
+
+    # logger.info("Sending ACK")
+    # req.send(b"")
+    # s = req.recv()
+    # logger.info("MeanPostsScore :: Got %s", s.decode())
 
 
 def get_zmq_top_post(manager_value, addr):
@@ -68,6 +80,7 @@ def get_zmq_top_post(manager_value, addr):
     req = ctx.socket(zmq.REQ)
     req.connect(addr)
 
+    # TODO: catch error here
     logger.info("Requesting top meme")
     req.send(b"")
     manager_value.value = req.recv()

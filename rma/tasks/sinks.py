@@ -1,5 +1,6 @@
 import abc
 import json
+import heapq
 
 import zmq
 import requests
@@ -74,19 +75,21 @@ class ZMQSink(Sink):
         self.rep.send(json.dumps(msg).encode())
 
     def final_stmt(self):
-        logger.info("ZMQSink :: sending poison pill")
-        logger.info("Searching for client ack")
-
-        self.rep.rcvtimeo = 1000
-        while True:
-            try:
-                self.rep.recv()
-                self.rep.send(b"")
-                break
-            except zmq.ZMQError as e:
-                if e.errno == zmq.EAGAIN:
-                    pass
-                raise
+        self.rep.recv()
+        self.rep.send(b"")
+        return
+        # logger.info("ZMQSink :: sending poison pill")
+        # logger.info("Searching for client ack")
+        # self.rep.rcvtimeo = 1000
+        # while True:
+        #    try:
+        #        self.rep.recv()
+        #        self.rep.send(b"")
+        #        break
+        #    except zmq.ZMQError as e:
+        #        if e.errno == zmq.EAGAIN:
+        #            pass
+        #        raise
 
 
 class PrintSink(Sink):
@@ -147,7 +150,7 @@ class TopPostZMQ(Sink):
     def __init__(self, port, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.port = port
-        self.top_meme = None
+        self.top_memes = []
 
         self.rep = self.context.socket(zmq.REP)
         self.rep.bind(f"tcp://*:{port}")
@@ -159,29 +162,47 @@ class TopPostZMQ(Sink):
         if "reddit.com/r" in msg["url"]:
             return
 
-        if self.top_meme is None or float(self.top_meme["mean_sentiment"]) <= float(
-            msg["mean_sentiment"]
-        ):
-            self.top_meme = msg
+        if len(self.top_memes) >= 10:
+            heapq.heappushpop(
+                self.top_memes, (-float(msg["mean_sentiment"]), self.nprocessed, msg)
+            )
+        else:
+            heapq.heappush(
+                self.top_memes, (-float(msg["mean_sentiment"]), self.nprocessed, msg)
+            )
 
     def final_stmt(self):
         logger.info("Downloading the dankest meme")
-        res = requests.get(self.top_meme["url"])
-        res.raise_for_status()
-
-        logger.info("Sending meme %s", self.top_meme)
-        self.rep.recv()
-        self.rep.send(res.content)
-
-        logger.info("Searching for client ack")
-        self.rep.rcvtimeo = 500
+        content: bytes
         while True:
             try:
+                _, _, meme = heapq.heappop(self.top_memes)
+                res = requests.get(meme["url"])
+                res.raise_for_status()
+                content = res.content
+                break
+            except requests.HTTPError:
+                pass
+            except IndexError:
                 self.rep.recv()
                 self.rep.send(b"")
-                break
-            except zmq.ZMQError as e:
-                if e.errno == zmq.EAGAIN:
-                    pass
-                raise
-        # self.rep.send(b"")
+                return
+
+        logger.info("Sending meme")
+        self.rep.recv()
+        self.rep.send(content)
+
+        self.rep.recv()
+        self.rep.send(b"")
+
+        # logger.info("Searching for client ack")
+        # self.rep.rcvtimeo = 500
+        # while True:
+        #    try:
+        #        self.rep.recv()
+        #        self.rep.send(b"")
+        #        break
+        #    except zmq.ZMQError as e:
+        #        if e.errno == zmq.EAGAIN:
+        #            pass
+        #        raise
