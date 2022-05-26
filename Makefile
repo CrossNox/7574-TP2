@@ -20,3 +20,8 @@ client:
 
 dag:
 	poetry run rma render-dag docker informe/images/ $(NWORKERS)
+
+pyreverse:
+	poetry run pyreverse rma --output=png --output-directory=informe/images/ --colorized --ignore=cli,client
+	poetry run pyreverse rma.dag --output=png --output-directory=informe/images/dag/ --colorized
+	poetry run pyreverse rma.tasks --output=png --output-directory=informe/images/tasks/ --colorized
