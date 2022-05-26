@@ -92,7 +92,6 @@ class VentilatorSource:
         logger.debug("Sending %s poison pills to workers", self.nworkers)
         pill_acks = 0
         self.sync_rep.rcvtimeo = 1000
-        self.sync_rep.sndtimeo = 1000
         while pill_acks < self.nworkers:
             self.push.send(b"")
             try:
@@ -114,7 +113,12 @@ class VentilatorSource:
 
 class VentilatorWorker:
     def __init__(
-        self, pulladdr, reqaddr, pushaddr, executor_cls, executor_kwargs=None,
+        self,
+        pulladdr,
+        reqaddr,
+        pushaddr,
+        executor_cls,
+        executor_kwargs=None,
     ):
         self.context = zmq.Context.instance()
 
@@ -341,16 +345,14 @@ class Worker:
 
         logger.debug("Worker :: Sending poison pill")
         pill_acks = 0
-        # self.syncsubs.rcvtimeo = 5000
-        # self.syncsubs.sndtimeo = 5000
-        self.pub.send(b"")
+        self.syncsubs.rcvtimeo = 1000
         while pill_acks < self.nsubs:
+            self.pub.send(b"")
             try:
                 self.syncsubs.recv()
                 self.syncsubs.send(b"")
                 pill_acks += 1
             except zmq.ZMQError as e:
-                self.pub.send(b"")
                 if e.errno == zmq.EAGAIN:
                     pass
                 else:

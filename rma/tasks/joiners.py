@@ -1,8 +1,8 @@
 import json
 from typing import Dict
 
-from rma.tasks.executor import Executor
 from rma.utils import get_logger
+from rma.tasks.executor import Executor
 
 logger = get_logger(__name__)
 
@@ -58,8 +58,6 @@ class KeyJoin(Executor):
                 pills += 1
                 logger.debug("Poison pill %s/%s ACKd", pills, self.inputs)
             else:
-                if pills > 0:
-                    logger.info("KeyJoin :: got %s", s)
                 msg = json.loads(s.decode())
                 self.handle_msg(msg)
 

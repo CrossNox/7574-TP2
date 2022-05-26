@@ -1,10 +1,11 @@
 import csv
 import json
-import multiprocessing as mp
 from pathlib import Path
+import multiprocessing as mp
+from typing import Dict, List
 
-import typer
 import zmq
+import typer
 
 from rma.utils import DEFAULT_PRETTY, DEFAULT_VERBOSE, get_logger, config_logging
 
@@ -108,7 +109,7 @@ def main(
 
     with mp.Manager() as manager:
         mean_posts_score = manager.Value(float, 0.0)
-        memes_urls = manager.list()
+        memes_urls: List[Dict[str, str]] = manager.list()
         top_meme = manager.Value(bytes, b"")
 
         pposts = mp.Process(target=relay_file, args=(posts, posts_relay))

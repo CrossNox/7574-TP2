@@ -1,10 +1,10 @@
-from pathlib import Path
 from typing import Dict
+from pathlib import Path
 
 import typer
 
-from rma.tasks.sinks import ZMQSink, FileSink, PrintSink, TopPostZMQ, TopPostDownload
 from rma.utils import get_logger
+from rma.tasks.sinks import ZMQSink, FileSink, PrintSink, TopPostZMQ, TopPostDownload
 
 logger = get_logger(__name__)
 

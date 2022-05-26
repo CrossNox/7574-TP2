@@ -1,8 +1,8 @@
 import abc
 import json
 
-import requests
 import zmq
+import requests
 
 from rma.utils import get_logger
 
@@ -77,11 +77,7 @@ class ZMQSink(Sink):
         logger.info("ZMQSink :: sending poison pill")
         logger.info("Searching for client ack")
 
-        self.rep.recv()
-        self.rep.send(b"")
-        return
-
-        # self.rep.rcvtimeo = 500
+        self.rep.rcvtimeo = 1000
         while True:
             try:
                 self.rep.recv()

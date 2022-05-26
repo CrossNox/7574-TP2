@@ -2,11 +2,11 @@
 
 
 from rma.dag.dag import DAG
-from rma.dag.joiner import DAGJoiner
 from rma.dag.sink import Sink
 from rma.dag.source import Source
-from rma.dag.ventilator import VentilatorBlock
 from rma.dag.worker import Worker
+from rma.dag.joiner import DAGJoiner
+from rma.dag.ventilator import VentilatorBlock
 
 
 def build_rma_dag(nworkers: int = 3):
@@ -81,9 +81,21 @@ def build_rma_dag(nworkers: int = 3):
     join_download_meme = DAGJoiner("join_download_meme", "bykey", ["id"])
 
     # ===================================================================== Sink
-    memes_url_sink = Sink("sink_memes_url", "zmqsink", ["9999"],)
-    mean_posts_score_sink = Sink("sink_mean_posts_score", "zmqsink", ["9999"],)
-    download_meme_sink = Sink("sink_download_meme", "zmq-top-post", ["9999"],)
+    memes_url_sink = Sink(
+        "sink_memes_url",
+        "zmqsink",
+        ["9999"],
+    )
+    mean_posts_score_sink = Sink(
+        "sink_mean_posts_score",
+        "zmqsink",
+        ["9999"],
+    )
+    download_meme_sink = Sink(
+        "sink_download_meme",
+        "zmq-top-post",
+        ["9999"],
+    )
 
     dag >> posts_source
     dag >> comments_source
