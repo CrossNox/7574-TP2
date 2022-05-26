@@ -1,10 +1,10 @@
-from typing import Dict
 from pathlib import Path
+from typing import Dict
 
 import typer
 
+from rma.tasks.sinks import ZMQSink, FileSink, PrintSink, TopPostZMQ, TopPostDownload
 from rma.utils import get_logger
-from rma.tasks.sinks import FileSink, PrintSink, TopPostDownload
 
 logger = get_logger(__name__)
 
@@ -22,6 +22,14 @@ def top_post(path: Path):
 
 
 @app.command()
+def zmq_top_post(port: int):
+    top_post_sink = TopPostZMQ(
+        port=port, addrin=state["addrin"], syncaddr=state["addrsync"]
+    )
+    top_post_sink.run()
+
+
+@app.command()
 def tofile(path: Path):
     file_sink = FileSink(path=path, addrin=state["addrin"], syncaddr=state["addrsync"])
     file_sink.run()
@@ -31,6 +39,12 @@ def tofile(path: Path):
 def printmsg():
     print_sink = PrintSink(addrin=state["addrin"], syncaddr=state["addrsync"])
     print_sink.run()
+
+
+@app.command()
+def zmqsink(port: int):
+    zmq_sink = ZMQSink(addrin=state["addrin"], syncaddr=state["addrsync"], port=port)
+    zmq_sink.run()
 
 
 @app.callback()

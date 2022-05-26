@@ -2,26 +2,18 @@
 
 
 from rma.dag.dag import DAG
+from rma.dag.joiner import DAGJoiner
 from rma.dag.sink import Sink
 from rma.dag.source import Source
-from rma.dag.worker import Worker
-from rma.dag.joiner import DAGJoiner
 from rma.dag.ventilator import VentilatorBlock
+from rma.dag.worker import Worker
 
 
 def build_rma_dag(nworkers: int = 3):
     # ===================================================================== Start
     dag = DAG("DAG")
-    posts_source = Source(
-        "posts_source",
-        "zmqrelay",
-        ["5555"],
-    )
-    comments_source = Source(
-        "comments_source",
-        "zmqrelay",
-        ["7777"],
-    )
+    posts_source = Source("posts_source", "zmqrelay", ["9999"])
+    comments_source = Source("comments_source", "zmqrelay", ["9999"])
 
     # ===================================================================== Posts top path
     filter_posts_cols_top = VentilatorBlock(
@@ -89,24 +81,9 @@ def build_rma_dag(nworkers: int = 3):
     join_download_meme = DAGJoiner("join_download_meme", "bykey", ["id"])
 
     # ===================================================================== Sink
-    memes_url_sink = Sink(
-        "sink_memes_url",
-        "tofile",
-        ["/outputs/edmemes.jsonl"],
-        volumes=["../outputs:/outputs"],
-    )
-    mean_posts_score_sink = Sink(
-        "sink_mean_posts_score",
-        "tofile",
-        ["/outputs/posts_score_mean.jsonl"],
-        volumes=["../outputs:/outputs"],
-    )
-    download_meme_sink = Sink(
-        "sink_download_meme",
-        "top-post",
-        ["/outputs/top_meme"],
-        volumes=["../outputs:/outputs"],
-    )
+    memes_url_sink = Sink("sink_memes_url", "zmqsink", ["9999"],)
+    mean_posts_score_sink = Sink("sink_mean_posts_score", "zmqsink", ["9999"],)
+    download_meme_sink = Sink("sink_download_meme", "zmq-top-post", ["9999"],)
 
     dag >> posts_source
     dag >> comments_source

@@ -7,7 +7,7 @@ networks:
     name: testing_net
 services:
   comments_source:
-    command: source tcp://*:5000 tcp://*:6000 2 zmqrelay 7777
+    command: source tcp://*:5000 tcp://*:6000 2 zmqrelay 9999
     container_name: comments_source
     environment:
     - PYTHONUNBUFFERED=1
@@ -567,7 +567,7 @@ services:
     - testing_net
     volumes: []
   posts_source:
-    command: source tcp://*:5000 tcp://*:6000 3 zmqrelay 5555
+    command: source tcp://*:5000 tcp://*:6000 3 zmqrelay 9999
     container_name: posts_source
     environment:
     - PYTHONUNBUFFERED=1
@@ -576,33 +576,30 @@ services:
     - testing_net
     volumes: []
   sink_download_meme:
-    command: sink tcp://join_download_meme:5000 tcp://join_download_meme:6000 top-post /outputs/top_meme
+    command: sink tcp://join_download_meme:5000 tcp://join_download_meme:6000 zmq-top-post 9999
     container_name: sink_download_meme
     environment:
     - PYTHONUNBUFFERED=1
     image: 7574-tp2:latest
     networks:
     - testing_net
-    volumes:
-    - ../outputs:/outputs
+    volumes: []
   sink_mean_posts_score:
-    command: sink tcp://posts_score_mean:5000 tcp://posts_score_mean:6000 tofile /outputs/posts_score_mean.jsonl
+    command: sink tcp://posts_score_mean:5000 tcp://posts_score_mean:6000 zmqsink 9999
     container_name: sink_mean_posts_score
     environment:
     - PYTHONUNBUFFERED=1
     image: 7574-tp2:latest
     networks:
     - testing_net
-    volumes:
-    - ../outputs:/outputs
+    volumes: []
   sink_memes_url:
-    command: sink tcp://join_dump_posts_urls:5000 tcp://join_dump_posts_urls:6000 tofile /outputs/edmemes.jsonl
+    command: sink tcp://join_dump_posts_urls:5000 tcp://join_dump_posts_urls:6000 zmqsink 9999
     container_name: sink_memes_url
     environment:
     - PYTHONUNBUFFERED=1
     image: 7574-tp2:latest
     networks:
     - testing_net
-    volumes:
-    - ../outputs:/outputs
+    volumes: []
 version: '3'

@@ -1,8 +1,8 @@
 import abc
 import json
 
-import zmq
 import requests
+import zmq
 
 from rma.utils import get_logger
 
@@ -60,6 +60,39 @@ class Sink(abc.ABC):
         self.syncclient.recv()
 
 
+# TODO: ZMQ Sinks should be pub/sub
+
+
+class ZMQSink(Sink):
+    def __init__(self, port, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.rep = self.context.socket(zmq.REP)
+        self.rep.bind(f"tcp://*:{port}")
+
+    def sink(self, msg):
+        self.rep.recv()
+        self.rep.send(json.dumps(msg).encode())
+
+    def final_stmt(self):
+        logger.info("ZMQSink :: sending poison pill")
+        logger.info("Searching for client ack")
+
+        self.rep.recv()
+        self.rep.send(b"")
+        return
+
+        # self.rep.rcvtimeo = 500
+        while True:
+            try:
+                self.rep.recv()
+                self.rep.send(b"")
+                break
+            except zmq.ZMQError as e:
+                if e.errno == zmq.EAGAIN:
+                    pass
+                raise
+
+
 class PrintSink(Sink):
     def sink(self, msg):
         print(msg)
@@ -111,3 +144,48 @@ class TopPostDownload(Sink):
             res = requests.get(self.top_meme["url"])
             res.raise_for_status()
             f.write(res.content)
+
+
+class TopPostZMQ(Sink):
+    # TODO: this could be a filter + simple download
+    def __init__(self, port, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.port = port
+        self.top_meme = None
+
+        self.rep = self.context.socket(zmq.REP)
+        self.rep.bind(f"tcp://*:{port}")
+
+    def sink(self, msg):
+        if msg["url"] is None or msg["url"] == "":
+            return
+
+        if "reddit.com/r" in msg["url"]:
+            return
+
+        if self.top_meme is None or float(self.top_meme["mean_sentiment"]) <= float(
+            msg["mean_sentiment"]
+        ):
+            self.top_meme = msg
+
+    def final_stmt(self):
+        logger.info("Downloading the dankest meme")
+        res = requests.get(self.top_meme["url"])
+        res.raise_for_status()
+
+        logger.info("Sending meme %s", self.top_meme)
+        self.rep.recv()
+        self.rep.send(res.content)
+
+        logger.info("Searching for client ack")
+        self.rep.rcvtimeo = 500
+        while True:
+            try:
+                self.rep.recv()
+                self.rep.send(b"")
+                break
+            except zmq.ZMQError as e:
+                if e.errno == zmq.EAGAIN:
+                    pass
+                raise
+        # self.rep.send(b"")
