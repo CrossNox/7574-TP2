@@ -55,8 +55,8 @@ class KeyJoin(Executor):
                 logger.debug("ACKing poison pill")
                 self.req_sckt.send(b"")
                 self.req_sckt.recv()
-                logger.debug("Poison pill ACKd")
                 pills += 1
+                logger.debug("Poison pill %s/%s ACKd", pills, self.inputs)
             else:
                 msg = json.loads(s.decode())
                 self.handle_msg(msg)

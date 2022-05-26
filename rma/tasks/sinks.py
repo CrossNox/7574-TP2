@@ -1,5 +1,6 @@
 import abc
 import json
+import heapq
 
 import zmq
 import requests
@@ -60,6 +61,25 @@ class Sink(abc.ABC):
         self.syncclient.recv()
 
 
+# TODO: ZMQ Sinks should be pub/sub
+
+
+class ZMQSink(Sink):
+    def __init__(self, port, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.rep = self.context.socket(zmq.REP)
+        self.rep.bind(f"tcp://*:{port}")
+
+    def sink(self, msg):
+        self.rep.recv()
+        self.rep.send(json.dumps(msg).encode())
+
+    def final_stmt(self):
+        self.rep.recv()
+        self.rep.send(b"")
+        return
+
+
 class PrintSink(Sink):
     def sink(self, msg):
         print(msg)
@@ -91,7 +111,7 @@ class TopPostDownload(Sink):
     def __init__(self, path, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.path = path
-        self.top_meme = None
+        self.top_memes = []
 
     def sink(self, msg):
         if msg["url"] is None or msg["url"] == "":
@@ -100,14 +120,79 @@ class TopPostDownload(Sink):
         if "reddit.com/r" in msg["url"]:
             return
 
-        if self.top_meme is None or float(self.top_meme["mean_sentiment"]) <= float(
-            msg["mean_sentiment"]
-        ):
-            self.top_meme = msg
+        if len(self.top_memes) >= 10:
+            heapq.heappushpop(
+                self.top_memes, (-float(msg["mean_sentiment"]), self.nprocessed, msg)
+            )
+        else:
+            heapq.heappush(
+                self.top_memes, (-float(msg["mean_sentiment"]), self.nprocessed, msg)
+            )
 
     def final_stmt(self):
-        logger.info("Downloading meme %s to %s", self.top_meme, self.path)
+        logger.info("Downloading meme to %s", self.path)
         with open(self.path, "wb") as f:
-            res = requests.get(self.top_meme["url"])
-            res.raise_for_status()
-            f.write(res.content)
+            content: bytes
+            while True:
+                try:
+                    _, _, meme = heapq.heappop(self.top_memes)
+                    res = requests.get(meme["url"])
+                    res.raise_for_status()
+                    content = res.content
+                    f.write(content)
+                    break
+                except requests.HTTPError:
+                    pass
+                except IndexError:
+                    break
+
+
+class TopPostZMQ(Sink):
+    # TODO: this could be a filter + simple download
+    def __init__(self, port, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.port = port
+        self.top_memes = []
+
+        self.rep = self.context.socket(zmq.REP)
+        self.rep.bind(f"tcp://*:{port}")
+
+    def sink(self, msg):
+        if msg["url"] is None or msg["url"] == "":
+            return
+
+        if "reddit.com/r" in msg["url"]:
+            return
+
+        if len(self.top_memes) >= 10:
+            heapq.heappushpop(
+                self.top_memes, (-float(msg["mean_sentiment"]), self.nprocessed, msg)
+            )
+        else:
+            heapq.heappush(
+                self.top_memes, (-float(msg["mean_sentiment"]), self.nprocessed, msg)
+            )
+
+    def final_stmt(self):
+        logger.info("Downloading the dankest meme")
+        content: bytes
+        while True:
+            try:
+                _, _, meme = heapq.heappop(self.top_memes)
+                res = requests.get(meme["url"])
+                res.raise_for_status()
+                content = res.content
+                break
+            except requests.HTTPError:
+                pass
+            except IndexError:
+                self.rep.recv()
+                self.rep.send(b"")
+                return
+
+        logger.info("Sending meme")
+        self.rep.recv()
+        self.rep.send(content)
+
+        self.rep.recv()
+        self.rep.send(b"")

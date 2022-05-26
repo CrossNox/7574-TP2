@@ -12,16 +12,8 @@ from rma.dag.ventilator import VentilatorBlock
 def build_rma_dag(nworkers: int = 3):
     # ===================================================================== Start
     dag = DAG("DAG")
-    posts_source = Source(
-        "posts_source",
-        "zmqrelay",
-        ["5555"],
-    )
-    comments_source = Source(
-        "comments_source",
-        "zmqrelay",
-        ["7777"],
-    )
+    posts_source = Source("posts_source", "zmqrelay", ["9999"])
+    comments_source = Source("comments_source", "zmqrelay", ["9999"])
 
     # ===================================================================== Posts top path
     filter_posts_cols_top = VentilatorBlock(
@@ -91,21 +83,18 @@ def build_rma_dag(nworkers: int = 3):
     # ===================================================================== Sink
     memes_url_sink = Sink(
         "sink_memes_url",
-        "tofile",
-        ["/outputs/edmemes.jsonl"],
-        volumes=["../outputs:/outputs"],
+        "zmqsink",
+        ["9999"],
     )
     mean_posts_score_sink = Sink(
         "sink_mean_posts_score",
-        "tofile",
-        ["/outputs/posts_score_mean.jsonl"],
-        volumes=["../outputs:/outputs"],
+        "zmqsink",
+        ["9999"],
     )
     download_meme_sink = Sink(
         "sink_download_meme",
-        "top-post",
-        ["/outputs/top_meme"],
-        volumes=["../outputs:/outputs"],
+        "zmq-top-post",
+        ["9999"],
     )
 
     dag >> posts_source
