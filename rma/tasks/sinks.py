@@ -78,18 +78,6 @@ class ZMQSink(Sink):
         self.rep.recv()
         self.rep.send(b"")
         return
-        # logger.info("ZMQSink :: sending poison pill")
-        # logger.info("Searching for client ack")
-        # self.rep.rcvtimeo = 1000
-        # while True:
-        #    try:
-        #        self.rep.recv()
-        #        self.rep.send(b"")
-        #        break
-        #    except zmq.ZMQError as e:
-        #        if e.errno == zmq.EAGAIN:
-        #            pass
-        #        raise
 
 
 class PrintSink(Sink):
@@ -123,7 +111,7 @@ class TopPostDownload(Sink):
     def __init__(self, path, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.path = path
-        self.top_meme = None
+        self.top_memes = []
 
     def sink(self, msg):
         if msg["url"] is None or msg["url"] == "":
@@ -132,17 +120,31 @@ class TopPostDownload(Sink):
         if "reddit.com/r" in msg["url"]:
             return
 
-        if self.top_meme is None or float(self.top_meme["mean_sentiment"]) <= float(
-            msg["mean_sentiment"]
-        ):
-            self.top_meme = msg
+        if len(self.top_memes) >= 10:
+            heapq.heappushpop(
+                self.top_memes, (-float(msg["mean_sentiment"]), self.nprocessed, msg)
+            )
+        else:
+            heapq.heappush(
+                self.top_memes, (-float(msg["mean_sentiment"]), self.nprocessed, msg)
+            )
 
     def final_stmt(self):
-        logger.info("Downloading meme %s to %s", self.top_meme, self.path)
+        logger.info("Downloading meme to %s", self.path)
         with open(self.path, "wb") as f:
-            res = requests.get(self.top_meme["url"])
-            res.raise_for_status()
-            f.write(res.content)
+            content: bytes
+            while True:
+                try:
+                    _, _, meme = heapq.heappop(self.top_memes)
+                    res = requests.get(meme["url"])
+                    res.raise_for_status()
+                    content = res.content
+                    f.write(content)
+                    break
+                except requests.HTTPError:
+                    pass
+                except IndexError:
+                    break
 
 
 class TopPostZMQ(Sink):
@@ -194,15 +196,3 @@ class TopPostZMQ(Sink):
 
         self.rep.recv()
         self.rep.send(b"")
-
-        # logger.info("Searching for client ack")
-        # self.rep.rcvtimeo = 500
-        # while True:
-        #    try:
-        #        self.rep.recv()
-        #        self.rep.send(b"")
-        #        break
-        #    except zmq.ZMQError as e:
-        #        if e.errno == zmq.EAGAIN:
-        #            pass
-        #        raise
