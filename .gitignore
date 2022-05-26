@@ -139,6 +139,10 @@ _minted-informe/
 *.bbl
 *.blg
 *.run.xml
+*.dvi
+*.toc
+*.dot
+*.synctex(busy)
 
 *.zip
 
