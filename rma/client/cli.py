@@ -45,8 +45,6 @@ def get_zmqsink_memes_url(manager_list, addr):
             break
 
         manager_list.append(json.loads(s.decode()))
-    # req.send(b"")
-    # req.recv()
 
 
 def get_zmq_mean_posts_score(manager_value, addr):
@@ -65,14 +63,6 @@ def get_zmq_mean_posts_score(manager_value, addr):
         else:
             logger.info("Mean posts got %s", s.decode())
             manager_value.value = float(s)
-
-    # req.send(b"")
-    # manager_value.value = float(req.recv().decode())
-
-    # logger.info("Sending ACK")
-    # req.send(b"")
-    # s = req.recv()
-    # logger.info("MeanPostsScore :: Got %s", s.decode())
 
 
 def get_zmq_top_post(manager_value, addr):
