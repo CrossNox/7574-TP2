@@ -1,0 +1,795 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="654"
+   height="759"
+   viewBox="0 0 490.5 569.25"
+   version="1.1"
+   id="svg281"
+   sodipodi:docname="structs.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs285" />
+  <sodipodi:namedview
+     id="namedview283"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:zoom="0.95783926"
+     inkscape:cx="39.672627"
+     inkscape:cy="379.5"
+     inkscape:window-width="1884"
+     inkscape:window-height="1010"
+     inkscape:window-x="1934"
+     inkscape:window-y="48"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg281" />
+  <g
+     id="graph0"
+     class="graph"
+     transform="translate(240.7384870428376,566.5795803998031) scale(0.6676049000492261)"
+     inkscape:export-filename="/home/nox/repos/fiuba/7574-DistribuidosI/7574-TP2/informe/images/structs.png"
+     inkscape:export-xdpi="300"
+     inkscape:export-ydpi="300">
+    <polygon
+       fill="white"
+       stroke="transparent"
+       points="-4,4 -4,-586.8 334.5,-586.8 334.5,4 -4,4"
+       id="polygon2" />
+    <!-- abc -->
+    <g
+       id="node1"
+       class="node">
+      <title
+         id="title4">source</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M134.04,-532.7C134.04,-532.7 194.96,-532.7 194.96,-532.7 200.96,-532.7 206.96,-538.7 206.96,-544.7 206.96,-544.7 206.96,-570.3 206.96,-570.3 206.96,-576.3 200.96,-582.3 194.96,-582.3 194.96,-582.3 134.04,-582.3 134.04,-582.3 128.04,-582.3 122.04,-576.3 122.04,-570.3 122.04,-570.3 122.04,-544.7 122.04,-544.7 122.04,-538.7 128.04,-532.7 134.04,-532.7"
+         id="path6" />
+      <text
+         text-anchor="middle"
+         x="164.5"
+         y="-565.7"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text8">Source</text>
+      <polyline
+         fill="none"
+         stroke="black"
+         points="122.04,-557.5 206.96,-557.5 "
+         id="polyline10" />
+      <text
+         text-anchor="middle"
+         x="143.66"
+         y="-540.9"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text12">PUB</text>
+      <polyline
+         fill="none"
+         stroke="black"
+         points="165.28,-532.7 165.28,-557.5 "
+         id="polyline14" />
+      <text
+         text-anchor="middle"
+         x="186.12"
+         y="-540.9"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text16">REP</text>
+    </g>
+    <!-- ventilator_src -->
+    <g
+       id="node2"
+       class="node">
+      <title
+         id="title19">ventilator_src</title>
+      <path
+         fill="none"
+         stroke="blue"
+         d="M119.12,-421.3C119.12,-421.3 211.88,-421.3 211.88,-421.3 217.88,-421.3 223.88,-427.3 223.88,-433.3 223.88,-433.3 223.88,-483.7 223.88,-483.7 223.88,-489.7 217.88,-495.7 211.88,-495.7 211.88,-495.7 119.12,-495.7 119.12,-495.7 113.12,-495.7 107.12,-489.7 107.12,-483.7 107.12,-483.7 107.12,-433.3 107.12,-433.3 107.12,-427.3 113.12,-421.3 119.12,-421.3"
+         id="path21" />
+      <text
+         text-anchor="middle"
+         x="130.24"
+         y="-479.1"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text23">SUB</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="153.35,-470.9 153.35,-495.7 "
+         id="polyline25" />
+      <text
+         text-anchor="middle"
+         x="164.6"
+         y="-479.1"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text27" />
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="175.85,-470.9 175.85,-495.7 "
+         id="polyline29" />
+      <text
+         text-anchor="middle"
+         x="199.85"
+         y="-479.1"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text31">REQ</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="107.12,-470.9 223.88,-470.9 "
+         id="polyline33" />
+      <text
+         text-anchor="middle"
+         x="143.5"
+         y="-454.3"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text35">Ventilator</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="179.88,-446.1 179.88,-470.9 "
+         id="polyline37" />
+      <text
+         text-anchor="middle"
+         x="201.88"
+         y="-454.3"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text39">REQ</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="107.12,-446.1 223.88,-446.1 "
+         id="polyline41" />
+      <text
+         text-anchor="middle"
+         x="138.52"
+         y="-429.5"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text43">PUSH</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="169.91,-421.3 169.91,-446.1 "
+         id="polyline45" />
+      <text
+         text-anchor="middle"
+         x="196.75"
+         y="-429.5"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text47">REP</text>
+    </g>
+    <!-- source&#45;&gt;ventilator_src -->
+    <g
+       id="edge1"
+       class="edge">
+      <title
+         id="title50">source:pub-&gt;ventilator_src:sub</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M143.5,-532.2C143.5,-532.2 137.77,-516.32 133.92,-505.66"
+         id="path52" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="137.19,-504.42 130.5,-496.2 130.6,-506.79 137.19,-504.42"
+         id="polygon54" />
+    </g>
+    <!-- ventilator_src&#45;&gt;source -->
+    <g
+       id="edge2"
+       class="edge">
+      <title
+         id="title57">ventilator_src:req_in-&gt;source:rep</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M199.5,-496.2C199.5,-496.2 193.77,-512.08 189.92,-522.74"
+         id="path59" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="186.6,-521.61 186.5,-532.2 193.19,-523.98 186.6,-521.61"
+         id="polygon61" />
+    </g>
+    <!-- ventilator_w1 -->
+    <g
+       id="node3"
+       class="node">
+      <title
+         id="title64">ventilator_w1</title>
+      <path
+         fill="none"
+         stroke="blue"
+         d="M12,-309.9C12,-309.9 83,-309.9 83,-309.9 89,-309.9 95,-315.9 95,-321.9 95,-321.9 95,-372.3 95,-372.3 95,-378.3 89,-384.3 83,-384.3 83,-384.3 12,-384.3 12,-384.3 6,-384.3 0,-378.3 0,-372.3 0,-372.3 0,-321.9 0,-321.9 0,-315.9 6,-309.9 12,-309.9"
+         id="path66" />
+      <text
+         text-anchor="middle"
+         x="25.5"
+         y="-367.7"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text68">PULL</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="51,-359.5 51,-384.3 "
+         id="polyline70" />
+      <text
+         text-anchor="middle"
+         x="73"
+         y="-367.7"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text72">REQ</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="0,-359.5 95,-359.5 "
+         id="polyline74" />
+      <text
+         text-anchor="middle"
+         x="47.5"
+         y="-342.9"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text76">Worker</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="0,-334.7 95,-334.7 "
+         id="polyline78" />
+      <text
+         text-anchor="middle"
+         x="47.5"
+         y="-318.1"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text80">PUSH</text>
+    </g>
+    <!-- ventilator_src&#45;&gt;ventilator_w1 -->
+    <g
+       id="edge4"
+       class="edge">
+      <title
+         id="title83">ventilator_src:push-&gt;ventilator_w1:pull</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M106.5,-433.5C106.5,-433.5 55.06,-402.58 34.17,-390.01"
+         id="path85" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="35.87,-386.95 25.5,-384.8 32.27,-392.95 35.87,-386.95"
+         id="polygon87" />
+    </g>
+    <!-- ventilator_w2 -->
+    <g
+       id="node4"
+       class="node">
+      <title
+         id="title90">ventilator_w2</title>
+      <path
+         fill="none"
+         stroke="blue"
+         d="M125,-309.9C125,-309.9 196,-309.9 196,-309.9 202,-309.9 208,-315.9 208,-321.9 208,-321.9 208,-372.3 208,-372.3 208,-378.3 202,-384.3 196,-384.3 196,-384.3 125,-384.3 125,-384.3 119,-384.3 113,-378.3 113,-372.3 113,-372.3 113,-321.9 113,-321.9 113,-315.9 119,-309.9 125,-309.9"
+         id="path92" />
+      <text
+         text-anchor="middle"
+         x="138.5"
+         y="-367.7"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text94">PULL</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="164,-359.5 164,-384.3 "
+         id="polyline96" />
+      <text
+         text-anchor="middle"
+         x="186"
+         y="-367.7"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text98">REQ</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="113,-359.5 208,-359.5 "
+         id="polyline100" />
+      <text
+         text-anchor="middle"
+         x="160.5"
+         y="-342.9"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text102">Worker</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="113,-334.7 208,-334.7 "
+         id="polyline104" />
+      <text
+         text-anchor="middle"
+         x="160.5"
+         y="-318.1"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text106">PUSH</text>
+    </g>
+    <!-- ventilator_src&#45;&gt;ventilator_w2 -->
+    <g
+       id="edge5"
+       class="edge">
+      <title
+         id="title109">ventilator_src:push-&gt;ventilator_w2:pull</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M138.5,-420.8C138.5,-420.8 138.5,-405.66 138.5,-395.02"
+         id="path111" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="142,-394.8 138.5,-384.8 135,-394.8 142,-394.8"
+         id="polygon113" />
+    </g>
+    <!-- ventilator_w3 -->
+    <g
+       id="node5"
+       class="node">
+      <title
+         id="title116">ventilator_w3</title>
+      <path
+         fill="none"
+         stroke="blue"
+         d="M238,-309.9C238,-309.9 309,-309.9 309,-309.9 315,-309.9 321,-315.9 321,-321.9 321,-321.9 321,-372.3 321,-372.3 321,-378.3 315,-384.3 309,-384.3 309,-384.3 238,-384.3 238,-384.3 232,-384.3 226,-378.3 226,-372.3 226,-372.3 226,-321.9 226,-321.9 226,-315.9 232,-309.9 238,-309.9"
+         id="path118" />
+      <text
+         text-anchor="middle"
+         x="251.5"
+         y="-367.7"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text120">PULL</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="277,-359.5 277,-384.3 "
+         id="polyline122" />
+      <text
+         text-anchor="middle"
+         x="299"
+         y="-367.7"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text124">REQ</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="226,-359.5 321,-359.5 "
+         id="polyline126" />
+      <text
+         text-anchor="middle"
+         x="273.5"
+         y="-342.9"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text128">Worker</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="226,-334.7 321,-334.7 "
+         id="polyline130" />
+      <text
+         text-anchor="middle"
+         x="273.5"
+         y="-318.1"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text132">PUSH</text>
+    </g>
+    <!-- ventilator_src&#45;&gt;ventilator_w3 -->
+    <g
+       id="edge6"
+       class="edge">
+      <title
+         id="title135">ventilator_src:push-&gt;ventilator_w3:pull</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M138.5,-420.8C138.5,-420.8 216.5,-384.8 216.5,-384.8 216.5,-384.8 217.62,-383.01 219.03,-380.78"
+         id="path137" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="222.13,-382.43 224.5,-372.1 216.21,-378.7 222.13,-382.43"
+         id="polygon139" />
+    </g>
+    <!-- ventilator_sink -->
+    <g
+       id="node6"
+       class="node">
+      <title
+         id="title142">ventilator_sink</title>
+      <path
+         fill="none"
+         stroke="blue"
+         d="M203.16,-198.5C203.16,-198.5 271.84,-198.5 271.84,-198.5 277.84,-198.5 283.84,-204.5 283.84,-210.5 283.84,-210.5 283.84,-260.9 283.84,-260.9 283.84,-266.9 277.84,-272.9 271.84,-272.9 271.84,-272.9 203.16,-272.9 203.16,-272.9 197.16,-272.9 191.16,-266.9 191.16,-260.9 191.16,-260.9 191.16,-210.5 191.16,-210.5 191.16,-204.5 197.16,-198.5 203.16,-198.5"
+         id="path144" />
+      <text
+         text-anchor="middle"
+         x="216.66"
+         y="-256.3"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text146">PULL</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="242.16,-248.1 242.16,-272.9 "
+         id="polyline148" />
+      <text
+         text-anchor="middle"
+         x="263"
+         y="-256.3"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text150">REP</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="191.16,-248.1 283.84,-248.1 "
+         id="polyline152" />
+      <text
+         text-anchor="middle"
+         x="237.5"
+         y="-231.5"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text154">Sink</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="191.16,-223.3 283.84,-223.3 "
+         id="polyline156" />
+      <text
+         text-anchor="middle"
+         x="214.28"
+         y="-206.7"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text158">PUB</text>
+      <polyline
+         fill="none"
+         stroke="blue"
+         points="237.4,-198.5 237.4,-223.3 "
+         id="polyline160" />
+      <text
+         text-anchor="middle"
+         x="260.23"
+         y="-206.7"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text162">REP</text>
+    </g>
+    <!-- ventilator_src&#45;&gt;ventilator_sink -->
+    <g
+       id="edge3"
+       class="edge">
+      <title
+         id="title165">ventilator_src:req_out-&gt;ventilator_sink:rep_in</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M224.5,-458.5C224.5,-458.5 330.5,-384.8 330.5,-384.8 330.5,-384.8 330.5,-309.4 330.5,-309.4 330.5,-309.4 304.62,-282.01 291.69,-268.31"
+         id="path167" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="293.91,-265.57 284.5,-260.7 288.82,-270.37 293.91,-265.57"
+         id="polygon169" />
+    </g>
+    <!-- ventilator_w1&#45;&gt;ventilator_src -->
+    <g
+       id="edge7"
+       class="edge">
+      <title
+         id="title172">ventilator_w1:req-&gt;ventilator_src:rep</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M96.5,-372.1C96.5,-372.1 103.5,-384.8 103.5,-384.8 103.5,-384.8 163.14,-407.89 186.9,-417.08"
+         id="path174" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="185.91,-420.45 196.5,-420.8 188.44,-413.93 185.91,-420.45"
+         id="polygon176" />
+    </g>
+    <!-- ventilator_w1&#45;&gt;ventilator_sink -->
+    <g
+       id="edge10"
+       class="edge">
+      <title
+         id="title179">ventilator_w1:push-&gt;ventilator_sink:pull</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M96.5,-322.1C96.5,-322.1 103.5,-309.4 103.5,-309.4 103.5,-309.4 159.29,-278.17 181.52,-265.73"
+         id="path181" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="183.48,-268.64 190.5,-260.7 180.06,-262.53 183.48,-268.64"
+         id="polygon183" />
+    </g>
+    <!-- ventilator_w2&#45;&gt;ventilator_src -->
+    <g
+       id="edge8"
+       class="edge">
+      <title
+         id="title186">ventilator_w2:req-&gt;ventilator_src:rep</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M186.5,-384.8C186.5,-384.8 190.81,-400.3 193.77,-410.96"
+         id="path188" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="190.45,-412.1 196.5,-420.8 197.2,-410.23 190.45,-412.1"
+         id="polygon190" />
+    </g>
+    <!-- ventilator_w2&#45;&gt;ventilator_sink -->
+    <g
+       id="edge11"
+       class="edge">
+      <title
+         id="title193">ventilator_w2:push-&gt;ventilator_sink:pull</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M209.5,-322.1C209.5,-322.1 208.5,-309.4 208.5,-309.4 208.5,-309.4 191.5,-273.4 191.5,-273.4 191.5,-273.4 191.42,-272.4 191.31,-270.95"
+         id="path195" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="194.77,-270.39 190.5,-260.7 187.8,-270.94 194.77,-270.39"
+         id="polygon197" />
+    </g>
+    <!-- ventilator_w3&#45;&gt;ventilator_src -->
+    <g
+       id="edge9"
+       class="edge">
+      <title
+         id="title200">ventilator_w3:req-&gt;ventilator_src:rep</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M299.5,-384.8C299.5,-384.8 252.8,-415.12 233.1,-427.91"
+         id="path202" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="230.98,-425.12 224.5,-433.5 234.79,-430.99 230.98,-425.12"
+         id="polygon204" />
+    </g>
+    <!-- ventilator_w3&#45;&gt;ventilator_sink -->
+    <g
+       id="edge12"
+       class="edge">
+      <title
+         id="title207">ventilator_w3:push-&gt;ventilator_sink:pull</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M273.5,-309.4C273.5,-309.4 241.44,-289.15 225.41,-279.02"
+         id="path209" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="226.82,-275.78 216.5,-273.4 223.09,-281.7 226.82,-275.78"
+         id="polygon211" />
+    </g>
+    <!-- worker -->
+    <g
+       id="node7"
+       class="node">
+      <title
+         id="title214">worker</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M205.88,-87.1C205.88,-87.1 269.12,-87.1 269.12,-87.1 275.12,-87.1 281.12,-93.1 281.12,-99.1 281.12,-99.1 281.12,-149.5 281.12,-149.5 281.12,-155.5 275.12,-161.5 269.12,-161.5 269.12,-161.5 205.88,-161.5 205.88,-161.5 199.88,-161.5 193.88,-155.5 193.88,-149.5 193.88,-149.5 193.88,-99.1 193.88,-99.1 193.88,-93.1 199.88,-87.1 205.88,-87.1"
+         id="path216" />
+      <text
+         text-anchor="middle"
+         x="215.5"
+         y="-144.9"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text218">SUB</text>
+      <polyline
+         fill="none"
+         stroke="black"
+         points="237.12,-136.7 237.12,-161.5 "
+         id="polyline220" />
+      <text
+         text-anchor="middle"
+         x="259.12"
+         y="-144.9"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text222">REQ</text>
+      <polyline
+         fill="none"
+         stroke="black"
+         points="193.88,-136.7 281.12,-136.7 "
+         id="polyline224" />
+      <text
+         text-anchor="middle"
+         x="237.5"
+         y="-120.1"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text226">Worker</text>
+      <polyline
+         fill="none"
+         stroke="black"
+         points="193.88,-111.9 281.12,-111.9 "
+         id="polyline228" />
+      <text
+         text-anchor="middle"
+         x="216"
+         y="-95.3"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text230">PUB</text>
+      <polyline
+         fill="none"
+         stroke="black"
+         points="238.12,-87.1 238.12,-111.9 "
+         id="polyline232" />
+      <text
+         text-anchor="middle"
+         x="259.46"
+         y="-95.3"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text234">REP</text>
+    </g>
+    <!-- ventilator_sink&#45;&gt;worker -->
+    <g
+       id="edge13"
+       class="edge">
+      <title
+         id="title237">ventilator_sink:pub-&gt;worker:sub</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M214.5,-198C214.5,-198 214.92,-182.86 215.22,-172.22"
+         id="path239" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="218.72,-172.09 215.5,-162 211.72,-171.9 218.72,-172.09"
+         id="polygon241" />
+    </g>
+    <!-- worker&#45;&gt;ventilator_sink -->
+    <g
+       id="edge14"
+       class="edge">
+      <title
+         id="title244">worker:req-&gt;ventilator_sink:rep_out</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M259.5,-162C259.5,-162 259.92,-177.14 260.22,-187.78"
+         id="path246" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="256.72,-188.1 260.5,-198 263.72,-187.91 256.72,-188.1"
+         id="polygon248" />
+    </g>
+    <!-- sink -->
+    <g
+       id="node8"
+       class="node">
+      <title
+         id="title251">sink</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M205.88,-0.5C205.88,-0.5 269.12,-0.5 269.12,-0.5 275.12,-0.5 281.12,-6.5 281.12,-12.5 281.12,-12.5 281.12,-38.1 281.12,-38.1 281.12,-44.1 275.12,-50.1 269.12,-50.1 269.12,-50.1 205.88,-50.1 205.88,-50.1 199.88,-50.1 193.88,-44.1 193.88,-38.1 193.88,-38.1 193.88,-12.5 193.88,-12.5 193.88,-6.5 199.88,-0.5 205.88,-0.5"
+         id="path253" />
+      <text
+         text-anchor="middle"
+         x="215.5"
+         y="-33.5"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text255">SUB</text>
+      <polyline
+         fill="none"
+         stroke="black"
+         points="237.12,-25.3 237.12,-50.1 "
+         id="polyline257" />
+      <text
+         text-anchor="middle"
+         x="259.12"
+         y="-33.5"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text259">REQ</text>
+      <polyline
+         fill="none"
+         stroke="black"
+         points="193.88,-25.3 281.12,-25.3 "
+         id="polyline261" />
+      <text
+         text-anchor="middle"
+         x="237.22"
+         y="-8.7"
+         font-family="Times,serif"
+         font-size="14.00"
+         id="text263">Sink</text>
+    </g>
+    <!-- worker&#45;&gt;sink -->
+    <g
+       id="edge15"
+       class="edge">
+      <title
+         id="title266">worker:pub-&gt;sink:sub</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M215.5,-86.6C215.5,-86.6 215.5,-71.46 215.5,-60.82"
+         id="path268" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="219,-60.6 215.5,-50.6 212,-60.6 219,-60.6"
+         id="polygon270" />
+    </g>
+    <!-- sink&#45;&gt;worker -->
+    <g
+       id="edge16"
+       class="edge">
+      <title
+         id="title273">sink:req-&gt;worker:rep</title>
+      <path
+         fill="none"
+         stroke="black"
+         d="M259.5,-50.6C259.5,-50.6 259.5,-65.74 259.5,-76.38"
+         id="path275" />
+      <polygon
+         fill="black"
+         stroke="black"
+         points="256,-76.6 259.5,-86.6 263,-76.6 256,-76.6"
+         id="polygon277" />
+    </g>
+  </g>
+</svg>

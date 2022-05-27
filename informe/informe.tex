@@ -139,42 +139,10 @@ Vemos en el siguiente diagrama los principales bloques del sistema:
 
 Los \texttt{Joins} cumplen con la misma interfaz y son muy cercanos a los \texttt{Workers} en comportamiento, con la salvedad de que reciben dos inputs.
 
-\digraph{structs}{
-    rankdir=TB;
-    splines=polyline;
-    node [shape=Mrecord];
-    source [label="{Source | {<pub>PUB | <rep>REP}}"];
-    ventilator_src [color=blue,label="{{<sub>SUB||<req_in>REQ}|{Ventilator|<req_out>REQ}|{<push>PUSH|<rep>REP}}"];
-    ventilator_w1 [color=blue,label="{{<pull>PULL|<req>REQ}|Worker|<push>PUSH}"];
-    ventilator_w2 [color=blue,label="{{<pull>PULL|<req>REQ}|Worker|<push>PUSH}"];
-    ventilator_w3 [color=blue,label="{{<pull>PULL|<req>REQ}|Worker|<push>PUSH}"];
-    ventilator_sink [color=blue,label="{{<pull>PULL|<rep_in>REP}|Sink|{<pub>PUB|<rep_out>REP}}"];
-    worker [label="{{<sub>SUB|<req>REQ}|Worker|{<pub>PUB|<rep>REP}}"];
-    sink [label="{{<sub>SUB|<req>REQ}|{Sink}}"];
-
-    source:pub -> ventilator_src:sub;
-    ventilator_src:req_in -> source:rep;
-
-    ventilator_src:req_out -> ventilator_sink:rep_in;
-
-    ventilator_src:push -> ventilator_w1:pull;
-    ventilator_src:push -> ventilator_w2:pull;
-    ventilator_src:push -> ventilator_w3:pull;
-
-    ventilator_w1:req -> ventilator_src:rep;
-    ventilator_w2:req -> ventilator_src:rep;
-    ventilator_w3:req -> ventilator_src:rep;
-
-    ventilator_w1:push -> ventilator_sink:pull;
-    ventilator_w2:push -> ventilator_sink:pull;
-    ventilator_w3:push -> ventilator_sink:pull;
-
-    ventilator_sink:pub -> worker:sub;
-    worker:req -> ventilator_sink:rep_out;
-
-    worker:pub -> sink:sub;
-    sink:req -> worker:rep;
-}
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/structs.png}
+\end{figure}
 
 
 \printbibliography
