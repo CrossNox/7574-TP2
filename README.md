@@ -13,6 +13,29 @@ Teniendo `poetry` instalado, el siguiente comando creará un nuevo entorno para 
 poetry install --no-dev
 ```
 
+# Descarga del set de datos
+El notebook `notebooks/Explore dataset.ipynb` descarga el dataset utilizando la API de Kaggle. Para ello, se requiere tener en `~/.kaggle` un archivo `kaggle.json` de credenciales. Para descargarlo, se deben seguir los pasos bajo la sección `Authentication` de [esta guía](https://www.kaggle.com/docs/api).
+
+## Dataset reducido
+Un breve notebook en `notebooks/Reduce dataset.ipynb` nos permite generar un dataset reducido en tamaño.
+
+# Renderizar `docker-compose.yaml`
+```bash
+poetry run rma render-dag docker/docker-compose.yaml informe/images/ 3
+```
+
+Ver el significado de cada parámetro con:
+```bash
+poetry run rma render-dag --help
+```
+
+Alternativamente,
+```bash
+make render-dag NWORKERS=<n>
+```
+
+Reemplazando `<n>` por la cantidad de workers deseada.
+
 # Configuración
 En el root del proyecto se provee un archivo `sample_settings.ini` con los posibles valores de configuración. Sin embargo, el archivo esperado se llama `settings.ini`. Por motivos obvios de seguridad, este archivo es ignorado en el sistema de versionado con `.gitignore`.
 
@@ -21,33 +44,20 @@ Puede copiar el archivo de prueba provisto, renombrarlo y modificar los valores 
 Cada posible configuración se puede sobreescribir con variables de entorno con la nomenclatura`<Seccion>_<Clave>`. Por ejemplo `SERVER_HOST`.
 
 # Ejecución
-## Server
-Revisar el mensaje de ayuda del servidor:
+Revisar los subcomandos disponibles y sus usos con:
 
 ```bash
 poetry run rma --help
-```
-
-## Client
-Revisar el mensaje de ayuda del cliente:
-
-```bash
-poetry run rma_client --help
 ```
 
 # Ejecución con Docker
 Desde la carpeta `docker`, ejecutar:
 
 ```bash
-docker-compose up --build
+docker-compose up
 ```
 
-## Ejecutar un cliente
+# Ejecutar un cliente
 ```bash
 make client
-```
-
-## Recrear DAG
-```bash
-make dag
 ```

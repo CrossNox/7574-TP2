@@ -33,17 +33,8 @@ services:
     networks:
     - testing_net
     volumes: []
-  extract_post_id_bottom_3_worker:
-    command: transform extract-post-id tcp://extract_post_id_bottom_src:8000 tcp://extract_post_id_bottom_src:8001 tcp://extract_post_id_bottom_sink:8003
-    container_name: extract_post_id_bottom_3_worker
-    environment:
-    - PYTHONUNBUFFERED=1
-    image: 7574-tp2:latest
-    networks:
-    - testing_net
-    volumes: []
   extract_post_id_bottom_sink:
-    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 3 tcp://*:6000 1
+    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 2 tcp://*:6000 1
     container_name: extract_post_id_bottom_sink
     environment:
     - PYTHONUNBUFFERED=1
@@ -52,7 +43,7 @@ services:
     - testing_net
     volumes: []
   extract_post_id_bottom_src:
-    command: ventilate source tcp://filter_ed_comments_sink:5000 tcp://filter_ed_comments_sink:6000 tcp://*:8000 tcp://*:8001 tcp://extract_post_id_bottom_sink:8002 3
+    command: ventilate source tcp://filter_ed_comments_sink:5000 tcp://filter_ed_comments_sink:6000 tcp://*:8000 tcp://*:8001 tcp://extract_post_id_bottom_sink:8002 2
     container_name: extract_post_id_bottom_src
     environment:
     - PYTHONUNBUFFERED=1
@@ -78,17 +69,8 @@ services:
     networks:
     - testing_net
     volumes: []
-  extract_post_id_side_3_worker:
-    command: transform extract-post-id tcp://extract_post_id_side_src:8000 tcp://extract_post_id_side_src:8001 tcp://extract_post_id_side_sink:8003
-    container_name: extract_post_id_side_3_worker
-    environment:
-    - PYTHONUNBUFFERED=1
-    image: 7574-tp2:latest
-    networks:
-    - testing_net
-    volumes: []
   extract_post_id_side_sink:
-    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 3 tcp://*:6000 1
+    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 2 tcp://*:6000 1
     container_name: extract_post_id_side_sink
     environment:
     - PYTHONUNBUFFERED=1
@@ -97,7 +79,7 @@ services:
     - testing_net
     volumes: []
   extract_post_id_side_src:
-    command: ventilate source tcp://filter_nan_sentiment_sink:5000 tcp://filter_nan_sentiment_sink:6000 tcp://*:8000 tcp://*:8001 tcp://extract_post_id_side_sink:8002 3
+    command: ventilate source tcp://filter_nan_sentiment_sink:5000 tcp://filter_nan_sentiment_sink:6000 tcp://*:8000 tcp://*:8001 tcp://extract_post_id_side_sink:8002 2
     container_name: extract_post_id_side_src
     environment:
     - PYTHONUNBUFFERED=1
@@ -123,17 +105,8 @@ services:
     networks:
     - testing_net
     volumes: []
-  filter_comments_cols_bottom_3_worker:
-    command: transform filter-columns tcp://filter_comments_cols_bottom_src:8000 tcp://filter_comments_cols_bottom_src:8001 tcp://filter_comments_cols_bottom_sink:8003 permalink body
-    container_name: filter_comments_cols_bottom_3_worker
-    environment:
-    - PYTHONUNBUFFERED=1
-    image: 7574-tp2:latest
-    networks:
-    - testing_net
-    volumes: []
   filter_comments_cols_bottom_sink:
-    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 3 tcp://*:6000 1
+    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 2 tcp://*:6000 1
     container_name: filter_comments_cols_bottom_sink
     environment:
     - PYTHONUNBUFFERED=1
@@ -142,7 +115,7 @@ services:
     - testing_net
     volumes: []
   filter_comments_cols_bottom_src:
-    command: ventilate source tcp://comments_source:5000 tcp://comments_source:6000 tcp://*:8000 tcp://*:8001 tcp://filter_comments_cols_bottom_sink:8002 3
+    command: ventilate source tcp://comments_source:5000 tcp://comments_source:6000 tcp://*:8000 tcp://*:8001 tcp://filter_comments_cols_bottom_sink:8002 2
     container_name: filter_comments_cols_bottom_src
     environment:
     - PYTHONUNBUFFERED=1
@@ -168,17 +141,8 @@ services:
     networks:
     - testing_net
     volumes: []
-  filter_comments_cols_side_3_worker:
-    command: transform filter-columns tcp://filter_comments_cols_side_src:8000 tcp://filter_comments_cols_side_src:8001 tcp://filter_comments_cols_side_sink:8003 permalink sentiment
-    container_name: filter_comments_cols_side_3_worker
-    environment:
-    - PYTHONUNBUFFERED=1
-    image: 7574-tp2:latest
-    networks:
-    - testing_net
-    volumes: []
   filter_comments_cols_side_sink:
-    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 3 tcp://*:6000 1
+    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 2 tcp://*:6000 1
     container_name: filter_comments_cols_side_sink
     environment:
     - PYTHONUNBUFFERED=1
@@ -187,7 +151,7 @@ services:
     - testing_net
     volumes: []
   filter_comments_cols_side_src:
-    command: ventilate source tcp://comments_source:5000 tcp://comments_source:6000 tcp://*:8000 tcp://*:8001 tcp://filter_comments_cols_side_sink:8002 3
+    command: ventilate source tcp://comments_source:5000 tcp://comments_source:6000 tcp://*:8000 tcp://*:8001 tcp://filter_comments_cols_side_sink:8002 2
     container_name: filter_comments_cols_side_src
     environment:
     - PYTHONUNBUFFERED=1
@@ -213,17 +177,8 @@ services:
     networks:
     - testing_net
     volumes: []
-  filter_ed_comments_3_worker:
-    command: filter ed-comments tcp://filter_ed_comments_src:8000 tcp://filter_ed_comments_src:8001 tcp://filter_ed_comments_sink:8003
-    container_name: filter_ed_comments_3_worker
-    environment:
-    - PYTHONUNBUFFERED=1
-    image: 7574-tp2:latest
-    networks:
-    - testing_net
-    volumes: []
   filter_ed_comments_sink:
-    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 3 tcp://*:6000 1
+    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 2 tcp://*:6000 1
     container_name: filter_ed_comments_sink
     environment:
     - PYTHONUNBUFFERED=1
@@ -232,7 +187,7 @@ services:
     - testing_net
     volumes: []
   filter_ed_comments_src:
-    command: ventilate source tcp://filter_comments_cols_bottom_sink:5000 tcp://filter_comments_cols_bottom_sink:6000 tcp://*:8000 tcp://*:8001 tcp://filter_ed_comments_sink:8002 3
+    command: ventilate source tcp://filter_comments_cols_bottom_sink:5000 tcp://filter_comments_cols_bottom_sink:6000 tcp://*:8000 tcp://*:8001 tcp://filter_ed_comments_sink:8002 2
     container_name: filter_ed_comments_src
     environment:
     - PYTHONUNBUFFERED=1
@@ -258,17 +213,8 @@ services:
     networks:
     - testing_net
     volumes: []
-  filter_nan_sentiment_3_worker:
-    command: filter nan-sentiment tcp://filter_nan_sentiment_src:8000 tcp://filter_nan_sentiment_src:8001 tcp://filter_nan_sentiment_sink:8003
-    container_name: filter_nan_sentiment_3_worker
-    environment:
-    - PYTHONUNBUFFERED=1
-    image: 7574-tp2:latest
-    networks:
-    - testing_net
-    volumes: []
   filter_nan_sentiment_sink:
-    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 3 tcp://*:6000 1
+    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 2 tcp://*:6000 1
     container_name: filter_nan_sentiment_sink
     environment:
     - PYTHONUNBUFFERED=1
@@ -277,7 +223,7 @@ services:
     - testing_net
     volumes: []
   filter_nan_sentiment_src:
-    command: ventilate source tcp://filter_comments_cols_side_sink:5000 tcp://filter_comments_cols_side_sink:6000 tcp://*:8000 tcp://*:8001 tcp://filter_nan_sentiment_sink:8002 3
+    command: ventilate source tcp://filter_comments_cols_side_sink:5000 tcp://filter_comments_cols_side_sink:6000 tcp://*:8000 tcp://*:8001 tcp://filter_nan_sentiment_sink:8002 2
     container_name: filter_nan_sentiment_src
     environment:
     - PYTHONUNBUFFERED=1
@@ -303,15 +249,6 @@ services:
     networks:
     - testing_net
     volumes: []
-  filter_null_url_3_worker:
-    command: filter null-url tcp://filter_null_url_src:8000 tcp://filter_null_url_src:8001 tcp://filter_null_url_sink:8003
-    container_name: filter_null_url_3_worker
-    environment:
-    - PYTHONUNBUFFERED=1
-    image: 7574-tp2:latest
-    networks:
-    - testing_net
-    volumes: []
   filter_null_url_bottom_1_worker:
     command: filter null-url tcp://filter_null_url_bottom_src:8000 tcp://filter_null_url_bottom_src:8001 tcp://filter_null_url_bottom_sink:8003
     container_name: filter_null_url_bottom_1_worker
@@ -330,17 +267,8 @@ services:
     networks:
     - testing_net
     volumes: []
-  filter_null_url_bottom_3_worker:
-    command: filter null-url tcp://filter_null_url_bottom_src:8000 tcp://filter_null_url_bottom_src:8001 tcp://filter_null_url_bottom_sink:8003
-    container_name: filter_null_url_bottom_3_worker
-    environment:
-    - PYTHONUNBUFFERED=1
-    image: 7574-tp2:latest
-    networks:
-    - testing_net
-    volumes: []
   filter_null_url_bottom_sink:
-    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 3 tcp://*:6000 1
+    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 2 tcp://*:6000 1
     container_name: filter_null_url_bottom_sink
     environment:
     - PYTHONUNBUFFERED=1
@@ -349,7 +277,7 @@ services:
     - testing_net
     volumes: []
   filter_null_url_bottom_src:
-    command: ventilate source tcp://filter_posts_above_mean_score:5000 tcp://filter_posts_above_mean_score:6000 tcp://*:8000 tcp://*:8001 tcp://filter_null_url_bottom_sink:8002 3
+    command: ventilate source tcp://filter_posts_above_mean_score:5000 tcp://filter_posts_above_mean_score:6000 tcp://*:8000 tcp://*:8001 tcp://filter_null_url_bottom_sink:8002 2
     container_name: filter_null_url_bottom_src
     environment:
     - PYTHONUNBUFFERED=1
@@ -358,7 +286,7 @@ services:
     - testing_net
     volumes: []
   filter_null_url_sink:
-    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 3 tcp://*:6000 1
+    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 2 tcp://*:6000 1
     container_name: filter_null_url_sink
     environment:
     - PYTHONUNBUFFERED=1
@@ -367,7 +295,7 @@ services:
     - testing_net
     volumes: []
   filter_null_url_src:
-    command: ventilate source tcp://filter_posts_cols_top_sink:5000 tcp://filter_posts_cols_top_sink:6000 tcp://*:8000 tcp://*:8001 tcp://filter_null_url_sink:8002 3
+    command: ventilate source tcp://filter_posts_cols_top_sink:5000 tcp://filter_posts_cols_top_sink:6000 tcp://*:8000 tcp://*:8001 tcp://filter_null_url_sink:8002 2
     container_name: filter_null_url_src
     environment:
     - PYTHONUNBUFFERED=1
@@ -402,17 +330,8 @@ services:
     networks:
     - testing_net
     volumes: []
-  filter_posts_cols_bottom_3_worker:
-    command: transform filter-columns tcp://filter_posts_cols_bottom_src:8000 tcp://filter_posts_cols_bottom_src:8001 tcp://filter_posts_cols_bottom_sink:8003 score id url
-    container_name: filter_posts_cols_bottom_3_worker
-    environment:
-    - PYTHONUNBUFFERED=1
-    image: 7574-tp2:latest
-    networks:
-    - testing_net
-    volumes: []
   filter_posts_cols_bottom_sink:
-    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 3 tcp://*:6000 1
+    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 2 tcp://*:6000 1
     container_name: filter_posts_cols_bottom_sink
     environment:
     - PYTHONUNBUFFERED=1
@@ -421,7 +340,7 @@ services:
     - testing_net
     volumes: []
   filter_posts_cols_bottom_src:
-    command: ventilate source tcp://posts_source:5000 tcp://posts_source:6000 tcp://*:8000 tcp://*:8001 tcp://filter_posts_cols_bottom_sink:8002 3
+    command: ventilate source tcp://posts_source:5000 tcp://posts_source:6000 tcp://*:8000 tcp://*:8001 tcp://filter_posts_cols_bottom_sink:8002 2
     container_name: filter_posts_cols_bottom_src
     environment:
     - PYTHONUNBUFFERED=1
@@ -492,17 +411,8 @@ services:
     networks:
     - testing_net
     volumes: []
-  filter_posts_cols_top_3_worker:
-    command: transform filter-columns tcp://filter_posts_cols_top_src:8000 tcp://filter_posts_cols_top_src:8001 tcp://filter_posts_cols_top_sink:8003 id url
-    container_name: filter_posts_cols_top_3_worker
-    environment:
-    - PYTHONUNBUFFERED=1
-    image: 7574-tp2:latest
-    networks:
-    - testing_net
-    volumes: []
   filter_posts_cols_top_sink:
-    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 3 tcp://*:6000 1
+    command: ventilate sink tcp://*:8003 tcp://*:8002 tcp://*:5000 2 tcp://*:6000 1
     container_name: filter_posts_cols_top_sink
     environment:
     - PYTHONUNBUFFERED=1
@@ -511,7 +421,7 @@ services:
     - testing_net
     volumes: []
   filter_posts_cols_top_src:
-    command: ventilate source tcp://posts_source:5000 tcp://posts_source:6000 tcp://*:8000 tcp://*:8001 tcp://filter_posts_cols_top_sink:8002 3
+    command: ventilate source tcp://posts_source:5000 tcp://posts_source:6000 tcp://*:8000 tcp://*:8001 tcp://filter_posts_cols_top_sink:8002 2
     container_name: filter_posts_cols_top_src
     environment:
     - PYTHONUNBUFFERED=1

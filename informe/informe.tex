@@ -63,7 +63,9 @@ En la carpeta \texttt{docker} se encuentra disponibles el \texttt{Dockerfile} as
 Referirse al archivo \texttt{README.md} provisto en el repositorio para ver las instrucciones de instalación.
 
 \section{DAG}
-Pensar tareas que conceptualmente hacen lo mismo, en lugar de tareas que reciben el mismo input.
+El diseño del DAG se hizo en base a la premisa de filtrar la mayor cantidad de datos lo antes posible. Del mismo, modo, evitar reprocesamiento que tenga la misma salida.
+
+Los nodos se plantearon no en base a unidades de ejecución que reciben el mismo input, sino en unidades que conceptualmente hacen el mismo tipo de tareas. Por ejemplo, filtros o transformaciones.
 
 \begin{figure}[H]
 \centering
@@ -79,7 +81,7 @@ Pensar tareas que conceptualmente hacen lo mismo, en lugar de tareas que reciben
 	\item Amarillo: \texttt{Filter}
 \end{itemize}
 
-Las líneas punteadas significan que esos nodos no son paralelizables.
+Las líneas punteadas significan que los resultados de esos nodos no pueden ser obtenidos hasta haber procesado la totalidad de los datos entrantes. Los números entre paréntesis son valores aproximados del tamaño de la salida de cada nodo. No sería adecuado pensarlos en valores absolutos, sino más bien, son ilustrativos en valor relativo. Estos valores se obtuvieron con \texttt{pandas}, viendo el tamaño en memoria del dataframe resultante de la operación (con los parámetros \texttt{memory\_usage=``deep''} y \texttt{index=False}).
 
 \subsection{DAG Generado desde RMA}
 \begin{figure}[H]
@@ -88,6 +90,11 @@ Las líneas punteadas significan que esos nodos no son paralelizables.
 \caption{Render automático del DAG implementado.}
 \end{figure}
 
+Este grafo es generado con \texttt{graphviz} automáticamente al renderizar el DAG mediante \texttt{poetry run rma render-dag}. Los nodos con lineas punteadas indican que esa tarea está siendo paralelizada. Las aristas punteadas indican dependencias entre tareas.
+
+Cada componente corre en su propio container de Docker. Necesita conocer las direcciones de las cuales sacar sus datos de entrada. Es por la complejidad asociada a generar este deploy que el presente TP incluye un módulo para definir DAGs y renderizar su \texttt{docker-compose.yaml} asociado.
+
+Notar no todos los nodos que pueden ser paralelizados se implementaron de modo de hacerlo. Algunas simplificaciones con respecto al diseño se hicieron en base al esfuerzo requerido. Por ejemplo, los joins son paralelizables, pero recordemos que el DAG se diseño de modo tal que la cantidad de datos que les llega es la menor posible. O en el caso de \texttt{filter\_posts\_above\_mean\_score}, siendo el único nodo que recibe la salida de otro como dependencia, se evitó complicar la implementación paralelizándolo.
 
 \section{Arquitectura}
 \subsection{Diagrama de Secuencia}
@@ -110,6 +117,7 @@ Las líneas punteadas significan que esos nodos no son paralelizables.
 \includegraphics[width=\textwidth]{images/Despliegue.png}
 \caption{Diagrama de despliegue del sistema.}
 \end{figure}
+Si bien sencillo, en este diagrama vemos que podemos tener $n$ nodos, cada nodo con $C_i$ containers ejecutando un entrypoint de \texttt{rma}. Mientras sean accesibles por red entre sí, cualquier configuración de nodos y containers por nodo será válida.
 
 \subsection{Diagrama de Paquetes}
 \begin{figure}[H]
@@ -118,7 +126,19 @@ Las líneas punteadas significan que esos nodos no son paralelizables.
 \caption{Diagrama de paquetes generado con \texttt{pyreverse}.}
 \end{figure}
 
-\section{Componentes}
+\section{Interfaz de los bloques del DAG}
+De modo de poder interfeacear cómodamente los distintos nodos del DAG, se define una interfaz en común. Se usa \texttt{PUB/SUB} para entrada/salida de datos y \texttt{REQ/REP} para coordinar actividades.
+
+Vemos en el siguiente diagrama los principales bloques del sistema:
+\begin{itemize}
+	\item Sources
+	\item Sinks
+	\item Ventilator Blocks: Bloques que paralelizan transformaciones o filtros
+	\item Workers: Ejecutan transformaciones o filtros sin paralelismo
+\end{itemize}
+
+Los \texttt{Joins} cumplen con la misma interfaz y son muy cercanos a los \texttt{Workers} en comportamiento, con la salvedad de que reciben dos inputs.
+
 \digraph{structs}{
     rankdir=TB;
     splines=polyline;
