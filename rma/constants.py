@@ -1,5 +1,7 @@
 from typing import List
 
+POISON_PILL = b""
+
 DEFAULT_PORT: int = 5678
 DEFAULT_HOST: str = "0.0.0.0"
 
