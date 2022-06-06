@@ -1,8 +1,10 @@
 import csv
 import json
+import signal
 from pathlib import Path
 import multiprocessing as mp
 from typing import Dict, List, Callable
+from multiprocessing.synchronize import Event as _EventClass
 
 import zmq
 import typer
@@ -21,7 +23,7 @@ logger = get_logger(__name__)
 app = typer.Typer()
 
 
-def relay_file(file_path: Path, addr: str, shutdown_event: mp.synchronize.Event):
+def relay_file(file_path: Path, addr: str, shutdown_event: _EventClass):
     sent = 0
     ctx = zmq.Context.instance()  # type: ignore
     req = ctx.socket(zmq.REQ)
@@ -41,7 +43,7 @@ def relay_file(file_path: Path, addr: str, shutdown_event: mp.synchronize.Event)
     req.send(POISON_PILL)
 
 
-def get_zmqsink_memes_url(manager_list, addr, shutdown_event: mp.synchronize.Event):
+def get_zmqsink_memes_url(manager_list, addr, shutdown_event: _EventClass):
     ctx = zmq.Context.instance()  # type: ignore
     req = ctx.socket(zmq.REQ)
     req.connect(addr)
@@ -56,7 +58,7 @@ def get_zmqsink_memes_url(manager_list, addr, shutdown_event: mp.synchronize.Eve
         manager_list.append(json.loads(s.decode()))
 
 
-def get_zmq_mean_posts_score(manager_value, addr, shutdown_event: mp.synchronize.Event):
+def get_zmq_mean_posts_score(manager_value, addr, shutdown_event: _EventClass):
     ctx = zmq.Context.instance()  # type: ignore
     req = ctx.socket(zmq.REQ)
     req.connect(addr)
@@ -74,7 +76,7 @@ def get_zmq_mean_posts_score(manager_value, addr, shutdown_event: mp.synchronize
             manager_value.value = float(s)
 
 
-def get_zmq_top_post(manager_value, addr, shutdown_event: mp.synchronize.Event):
+def get_zmq_top_post(manager_value, addr, shutdown_event: _EventClass):
     ctx = zmq.Context.instance()  # type: ignore
     req = ctx.socket(zmq.REQ)
     req.connect(addr)
@@ -138,6 +140,17 @@ def main(
 
         shutdown_event = mp.Event()
 
+        def _shutdown(*_args):
+            logger.error("Got SIGTERM")
+            shutdown_event.set()
+            coalesce(pposts.join)()
+            coalesce(pcomments.join)()
+            coalesce(p_mean_posts_score.join)()
+            coalesce(p_memes_urls.join)()
+            coalesce(p_top_meme.join)()
+
+        signal.signal(signal.SIGTERM, _shutdown)
+
         try:
             pposts = mp.Process(
                 target=relay_file, args=(posts, posts_relay, shutdown_event)
@@ -199,13 +212,8 @@ def main(
                 f.write(top_meme.value)
 
         except KeyboardInterrupt:
-            logger.info("Got keyboard interrupt, gracefully shutting down")
-            shutdown_event.set()
-            coalesce(pposts.join)()
-            coalesce(pcomments.join)()
-            coalesce(p_mean_posts_score.join)()
-            coalesce(p_memes_urls.join)()
-            coalesce(p_top_meme.join)()
+            logger.error("Got keyboard interrupt, gracefully shutting down")
+            _shutdown()
 
 
 if __name__ == "__main__":

@@ -1,14 +1,35 @@
+import abc
 import json
-from typing import List, Tuple
+import signal
+from typing import List, Type, Tuple, TypeVar, Optional
 
 import zmq
 
 from rma.utils import get_logger
+from rma.constants import POISON_PILL
+from rma.tasks.executor import Executor
 
 logger = get_logger(__name__)
 
 
-class VentilatorSource:
+class RunningBlock(abc.ABC):
+    def __init__(self):
+        self._signaled_termination = False
+        signal.signal(signal.SIGTERM, self._handle_sigterm)
+
+    def run(self):
+        self._run()
+
+    @abc.abstractmethod
+    def _run(self):
+        pass
+
+    @abc.abstractmethod
+    def _handle_sigterm(self):
+        pass
+
+
+class VentilatorSource(RunningBlock):
     def __init__(
         self,
         subaddr,
@@ -19,6 +40,7 @@ class VentilatorSource:
         nworkers: int,
         subfilter: str = "",
     ):
+        super().__init__()
         self.context = zmq.Context.instance()  # type: ignore
 
         # SUB where to get data from
@@ -53,7 +75,15 @@ class VentilatorSource:
         logger.debug("Ventilate sync addr %s", syncaddr)
         logger.debug("Ventilate looking for sink %s", sinkaddr)
 
-    def run(self):
+    def _handle_sigterm(self):
+        # TODO: send poison pills
+        self.sub.close()
+        self.subsync.close()
+        self.push.close()
+        self.sync_rep.close()
+        self.sink_req.clse()
+
+    def _run(self):
         # First, we need to know that all workers are running and listening
         # Then, we let the sink know we are going to start processing stuff
         # so they should listen to results.
@@ -65,53 +95,53 @@ class VentilatorSource:
         subs = 0
         while subs < self.nworkers:
             _ = self.sync_rep.recv()
-            self.sync_rep.send(b"")
+            self.sync_rep.send(POISON_PILL)
             subs += 1
             logger.debug(f"VentilatorSource :: +1 subscriber ({subs}/{self.nworkers})")
 
         logger.debug("VentilatorSource :: Syncing with sink")
-        self.sink_req.send(b"")
+        self.sink_req.send(POISON_PILL)
         self.sink_req.recv()
 
         logger.debug("Syncing with pub")
-        self.subsync.send(b"")
+        self.subsync.send(POISON_PILL)
         self.subsync.recv()
 
-        while True:
+        while not self._signaled_termination:
             s = self.sub.recv()
 
-            if s == b"":
+            if s == POISON_PILL:
                 break
 
             self.push.send(s)
 
         logger.debug("ACKing poison pill")
-        self.subsync.send(b"")
+        self.subsync.send(POISON_PILL)
         self.subsync.recv()
 
         logger.debug("Sending %s poison pills to workers", self.nworkers)
         pill_acks = 0
         self.sync_rep.rcvtimeo = 1000
         while pill_acks < self.nworkers:
-            self.push.send(b"")
+            self.push.send(POISON_PILL)
             try:
                 self.sync_rep.recv()
-                self.sync_rep.send(b"")
+                self.sync_rep.send(POISON_PILL)
                 pill_acks += 1
-            except zmq.ZMQError as e:
+            except zmq.error.ZMQError as e:
                 if e.errno == zmq.EAGAIN:
                     pass
                 else:
                     raise
 
         logger.debug("Expecting poison pill ack from sink")
-        self.sink_req.send(b"")
+        self.sink_req.send(POISON_PILL)
         self.sink_req.recv()
 
         logger.debug("VentilatorSource :: exiting")
 
 
-class VentilatorWorker:
+class VentilatorWorker(RunningBlock):
     def __init__(
         self,
         pulladdr,
@@ -120,6 +150,7 @@ class VentilatorWorker:
         executor_cls,
         executor_kwargs=None,
     ):
+        super().__init__()
         self.context = zmq.Context.instance()
 
         # PULL address to get message from
@@ -145,25 +176,32 @@ class VentilatorWorker:
         logger.debug("Worker synced to %s", reqaddr)
         logger.debug("Worker pushing to %s", pushaddr)
 
-    def run(self):
+    def _handle_sigterm(self):
+        self.task_pull.close()
+        self.source_req.close()
+        self.push.close()
+        self.executor.stop()
+
+    def _run(self):
         logger.info("Sync with ventilator source")
-        self.source_req.send(b"")
+        self.source_req.send(POISON_PILL)
         self.source_req.recv()
 
         self.executor.run()
 
         logger.info("Acking poison pill to ventilator source")
-        self.source_req.send(b"")
+        self.source_req.send(POISON_PILL)
         self.source_req.recv()
 
         logger.info("Sending poison pill to ventilator sink")
-        self.push.send(b"")
+        self.push.send(POISON_PILL)
 
 
-class VentilatorSink:
+class VentilatorSink(RunningBlock):
     def __init__(
         self, pulladdr, repaddr, pubaddr, nworkers: int, nsubs: int, subsyncaddr
     ):
+        super().__init__()
         self.context = zmq.Context.instance()  # type: ignore
 
         # PULL where to get workers results
@@ -194,43 +232,49 @@ class VentilatorSink:
         logger.debug("Ventilate sink :: publishing at %s", pubaddr)
         logger.debug("Ventilate sink :: syncing %s at address %s", nsubs, subsyncaddr)
 
-    def run(self):
+    def _handle_sigterm(self):
+        self.workers_results.close()
+        self.source_rep.close()
+        self.pub.close()
+        self.syncsubs.close()
+
+    def _run(self):
         logger.debug("Syncing with all subs")
         subs = 0
         while subs < self.nsubs:
             _ = self.syncsubs.recv()
-            self.syncsubs.send(b"")
+            self.syncsubs.send(POISON_PILL)
             subs += 1
             logger.debug(f"Ventilate sink :: +1 subscriber ({subs}/{self.nworkers})")
 
         logger.debug("Syncing with source")
         self.source_rep.recv()
-        self.source_rep.send(b"")
+        self.source_rep.send(POISON_PILL)
 
         alive_workers = self.nworkers
         while alive_workers > 0:
             s = self.workers_results.recv()
 
-            if s == b"":
+            if s == POISON_PILL:
                 alive_workers -= 1
             else:
                 self.pub.send(s)
 
         logger.debug("ACKing poison pill with source")
         self.source_rep.recv()
-        self.source_rep.send(b"")
+        self.source_rep.send(POISON_PILL)
 
         logger.debug("VentilatorSink :: Sending poison pill")
 
         pill_acks = 0
         self.syncsubs.rcvtimeo = 1000
         while pill_acks < self.nsubs:
-            self.pub.send(b"")
+            self.pub.send(POISON_PILL)
             try:
                 self.syncsubs.recv()
-                self.syncsubs.send(b"")
+                self.syncsubs.send(POISON_PILL)
                 pill_acks += 1
-            except zmq.ZMQError as e:
+            except zmq.error.ZMQError as e:
                 if e.errno == zmq.EAGAIN:
                     pass
                 else:
@@ -239,7 +283,10 @@ class VentilatorSink:
         logger.debug("VentilatorSink :: Exiting")
 
 
-class Worker:
+E = TypeVar("E", bound=Executor)
+
+
+class Worker(RunningBlock):
     def __init__(
         self,
         subaddr,
@@ -247,11 +294,12 @@ class Worker:
         pubaddr,
         subsyncaddr,
         nsubs: int,
-        executor_cls,
+        executor_cls: Type[E],
         subfilter="",
         executor_kwargs=None,
         deps: List[Tuple[str, str, str]] = None,
     ):
+        super().__init__()
         self.context = zmq.Context.instance()  # type: ignore
 
         # SUB where to get data from
@@ -280,23 +328,32 @@ class Worker:
         self.deps = deps or []
         self.executor_cls = executor_cls
         self.executor_kwargs = executor_kwargs or {}
+        self.executor: Optional[Type[E]] = None
 
         logger.debug("Worker :: subbed to %s with filter '%s'", subaddr, subfilter)
         logger.debug("Worker :: sync with producer at %s", reqaddr)
         logger.debug("Worker :: publishing at %s", pubaddr)
         logger.debug("Worker :: sync with %s clients at address %s", nsubs, subsyncaddr)
 
-    def run(self):
+    def _handle_sigterm(self):
+        self.sub.close()
+        self.req.close()
+        self.pub.close()
+        self.syncsubs.close()
+        if self.executor is not None:
+            self.executor.stop()
+
+    def _run(self):
         logger.debug("Worker :: Syncing with all subs")
         subs = 0
         while subs < self.nsubs:
             _ = self.syncsubs.recv()
-            self.syncsubs.send(b"")
+            self.syncsubs.send(POISON_PILL)
             subs += 1
             logger.debug(f"Worker :: +1 subscriber ({subs}/{self.nsubs})")
 
         logger.debug("Worker :: Syncing with producer")
-        self.req.send(b"")
+        self.req.send(POISON_PILL)
         self.req.recv()
 
         logger.debug("Worker :: resolving %s dependencies", len(self.deps))
@@ -317,15 +374,15 @@ class Worker:
 
             _dep_sync = zmq.Context.instance().socket(zmq.REQ)
             _dep_sync.connect(dep_sync)
-            _dep_sync.send(b"")
+            _dep_sync.send(POISON_PILL)
             _dep_sync.recv()
 
             final_deps[dep_name] = json.loads(_sub.recv().decode())
 
-            while _sub.recv() != b"":
+            while _sub.recv() != POISON_PILL:
                 pass
 
-            _dep_sync.send(b"")
+            _dep_sync.send(POISON_PILL)
             _dep_sync.recv()
 
         # for dep_name, sub in _deps_subs.items():
@@ -333,26 +390,26 @@ class Worker:
 
         logger.debug("Worker :: Running executor")
         # Thingy to execute
-        executor = self.executor_cls(
+        self.executor = self.executor_cls(
             **final_deps, task_in=self.sub, task_out=self.pub, **self.executor_kwargs
         )
 
-        executor.run()
+        self.executor.run()
 
         logger.debug("ACKing poison pill")
-        self.req.send(b"")
+        self.req.send(POISON_PILL)
         self.req.recv()
 
         logger.debug("Worker :: Sending poison pill")
         pill_acks = 0
         self.syncsubs.rcvtimeo = 1000
         while pill_acks < self.nsubs:
-            self.pub.send(b"")
+            self.pub.send(POISON_PILL)
             try:
                 self.syncsubs.recv()
-                self.syncsubs.send(b"")
+                self.syncsubs.send(POISON_PILL)
                 pill_acks += 1
-            except zmq.ZMQError as e:
+            except zmq.error.ZMQError as e:
                 if e.errno == zmq.EAGAIN:
                     pass
                 else:
@@ -361,7 +418,7 @@ class Worker:
         logger.debug("Worker :: Exiting")
 
 
-class Joiner:
+class Joiner(RunningBlock):
     # Yes, this is so close to a worker
     # Just changes the merging of subs
     # TODO: merge these two things
@@ -374,6 +431,7 @@ class Joiner:
         executor_cls,
         executor_kwargs=None,
     ):
+        super().__init__()
         self.context = zmq.Context.instance()  # type: ignore
 
         # PUB to publish joined data to
@@ -410,19 +468,26 @@ class Joiner:
             **executor_kwargs,
         )
 
-    def run(self):
+    def _handle_sigterm(self):
+        self.pub.close()
+        self.syncsubs.close()
+        self.sub.close()
+        self.req_sckt.close()
+        self.executor.stop()
+
+    def _run(self):
         logger.debug("Joiner :: Syncing with all subs")
         subs = 0
         while subs < self.nsubs:
             _ = self.syncsubs.recv()
-            self.syncsubs.send(b"")
+            self.syncsubs.send(POISON_PILL)
             subs += 1
             logger.debug(f"Joiner :: +1 subscriber ({subs}/{self.nsubs})")
 
         logger.debug("Joiner :: Syncing with all inputs")
 
         for _ in range(len(self.inputs)):
-            self.req_sckt.send(b"")
+            self.req_sckt.send(POISON_PILL)
             self.req_sckt.recv()
 
         logger.debug("Joiner :: Running executor")
@@ -433,12 +498,12 @@ class Joiner:
         pill_acks = 0
         self.syncsubs.rcvtimeo = 1000
         while pill_acks < self.nsubs:
-            self.pub.send(b"")
+            self.pub.send(POISON_PILL)
             try:
                 self.syncsubs.recv()
-                self.syncsubs.send(b"")
+                self.syncsubs.send(POISON_PILL)
                 pill_acks += 1
-            except zmq.ZMQError as e:
+            except zmq.error.ZMQError as e:
                 if e.errno == zmq.EAGAIN:
                     pass
                 else:

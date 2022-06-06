@@ -2,15 +2,20 @@ import abc
 import json
 
 from rma.utils import get_logger
+from rma.constants import POISON_PILL
 
 logger = get_logger(__name__)
 
 
 class Executor(abc.ABC):
     def __init__(self, task_in, task_out):
+        self._signaled_termination = False
         self.task_in = task_in
         self.task_out = task_out
         self.nprocessed = 0
+
+    def stop(self):
+        self._signaled_termination = True
 
     @abc.abstractmethod
     def final_stmt(self):
@@ -21,10 +26,10 @@ class Executor(abc.ABC):
         pass
 
     def run(self):
-        while True:
+        while not self._signaled_termination:
             s = self.task_in.recv()
 
-            if s == b"":
+            if s == POISON_PILL:
                 break
 
             msg = json.loads(s.decode())
