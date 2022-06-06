@@ -14,43 +14,47 @@ state: Dict[str, str] = {}
 
 
 @app.command()
-def top_post(path: Path):
-    top_post_sink = TopPostDownload(
-        path=path, addrin=state["addrin"], syncaddr=state["addrsync"]
-    )
+def top_post(path: Path = typer.Argument(..., help="Path to download the top post to")):
+    top_post_sink = TopPostDownload(path=path, **state)
     top_post_sink.run()
 
 
 @app.command()
-def zmq_top_post(port: int):
-    top_post_sink = TopPostZMQ(
-        port=port, addrin=state["addrin"], syncaddr=state["addrsync"]
+def zmq_top_post(
+    port: int = typer.Argument(
+        ..., help="Port to bind to and listen for incoming requests for the best meme"
     )
+):
+    top_post_sink = TopPostZMQ(port=port, **state)
     top_post_sink.run()
 
 
 @app.command()
-def tofile(path: Path):
-    file_sink = FileSink(path=path, addrin=state["addrin"], syncaddr=state["addrsync"])
+def tofile(path: Path = typer.Argument(..., help="Path to write messages to")):
+    file_sink = FileSink(path=path, **state)
     file_sink.run()
 
 
 @app.command()
 def printmsg():
-    print_sink = PrintSink(addrin=state["addrin"], syncaddr=state["addrsync"])
+    print_sink = PrintSink(**state)
     print_sink.run()
 
 
 @app.command()
-def zmqsink(port: int):
-    zmq_sink = ZMQSink(addrin=state["addrin"], syncaddr=state["addrsync"], port=port)
+def zmqsink(
+    port: int = typer.Argument(
+        ..., help="Port to bind to and reply to incoming requests for messages"
+    )
+):
+    zmq_sink = ZMQSink(port=port, **state)
     zmq_sink.run()
 
 
 @app.callback()
 def main(
     addrin: str = typer.Argument(..., help="The address to read from"),
-    addrsync: str = typer.Argument(..., help=""),
+    addrsync: str = typer.Argument(..., help="Address to sync with"),
 ):
     state["addrin"] = addrin
-    state["addrsync"] = addrsync
+    state["syncaddr"] = addrsync

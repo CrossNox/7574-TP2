@@ -17,11 +17,15 @@ app = typer.Typer()
 
 @app.command()
 def uniq_posts(
-    subaddr: str,
-    reqaddr: str,
-    pubaddr: str,
-    repaddr: str,
-    nsubs: int,
+    subaddr: str = typer.Argument(..., help="Address to subscribe to"),
+    reqaddr: str = typer.Argument(
+        ..., help="Address to connect to and sync with producer"
+    ),
+    pubaddr: str = typer.Argument(..., help="Address to publish data to"),
+    repaddr: str = typer.Argument(
+        ..., help="Address to bind to and sync with subscribers"
+    ),
+    nsubs: int = typer.Argument(..., help="How many subscribers are expected"),
 ):
     # TODO: this is a limitation design
     # A ventilator worker should be able to declare dependencies
@@ -38,13 +42,21 @@ def uniq_posts(
 
 @app.command()
 def posts_score_above_mean(
-    subaddr: str,
-    reqaddr: str,
-    pubaddr: str,
-    repaddr: str,
-    nsubs: int,
-    meansyncaddr: str,
-    meansubaddr: str,
+    subaddr: str = typer.Argument(..., help="Address to subscribe to"),
+    reqaddr: str = typer.Argument(
+        ..., help="Address to connect to and sync with producer"
+    ),
+    pubaddr: str = typer.Argument(..., help="Address to publish data to"),
+    repaddr: str = typer.Argument(
+        ..., help="Address to bind to and sync with subscribers"
+    ),
+    nsubs: int = typer.Argument(..., help="How many subscribers are expected"),
+    meansyncaddr: str = typer.Argument(
+        ..., help="Address to sync with mean calculator"
+    ),
+    meansubaddr: str = typer.Argument(
+        ..., help="Address to subscribe to and get the mean"
+    ),
 ):
     # TODO: this is a limitation design
     # A ventilator worker should be able to declare dependencies

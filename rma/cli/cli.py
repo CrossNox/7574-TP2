@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any, Dict
 
 import yaml
 import typer
@@ -22,8 +21,6 @@ app.add_typer(source_app, name="source")
 app.add_typer(transform_app, name="transform")
 app.add_typer(ventilate_app, name="ventilate")
 app.add_typer(join_app, name="join")
-
-CFG: Dict[str, Any] = {}
 
 
 @app.callback()

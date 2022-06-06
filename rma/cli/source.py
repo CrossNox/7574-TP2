@@ -29,7 +29,7 @@ def zmqrelay(port: int = typer.Argument(..., help="Adress to REP port to read fr
 def main(
     addrout: str = typer.Argument(..., help="Bind address to dump into"),
     addrsync: str = typer.Argument(..., help="Bind address to sync"),
-    nsubs: int = typer.Argument(..., help=""),
+    nsubs: int = typer.Argument(..., help="Amount of expected subscribers"),
 ):
     state["addrout"] = addrout
     state["addrsync"] = addrsync

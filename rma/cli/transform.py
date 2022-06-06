@@ -18,11 +18,17 @@ app = typer.Typer()
 
 @app.command()
 def posts_score_mean(
-    subaddr: str,
-    reqaddr: str,
-    pubaddr: str,
-    repaddr: str,
-    nsubs: int,
+    subaddr: str = typer.Argument(
+        ..., help="Address to connect to and fetch data from"
+    ),
+    reqaddr: str = typer.Argument(
+        ..., help="Address to connect to and sync with producer"
+    ),
+    pubaddr: str = typer.Argument(..., help="Address to bind to and publish results"),
+    repaddr: str = typer.Argument(
+        ..., help="Address to bind to and sync with subscribers"
+    ),
+    nsubs: int = typer.Argument(..., help="Amount of expected subscribers"),
 ):
     worker = Worker(
         subaddr=subaddr,
@@ -37,11 +43,17 @@ def posts_score_mean(
 
 @app.command()
 def mean_sentiment(
-    subaddr: str,
-    reqaddr: str,
-    pubaddr: str,
-    repaddr: str,
-    nsubs: int,
+    subaddr: str = typer.Argument(
+        ..., help="Address to connect to and fetch data from"
+    ),
+    reqaddr: str = typer.Argument(
+        ..., help="Address to connect to and sync with producer"
+    ),
+    pubaddr: str = typer.Argument(..., help="Address to bind to and publish results"),
+    repaddr: str = typer.Argument(
+        ..., help="Address to bind to and sync with subscribers"
+    ),
+    nsubs: int = typer.Argument(..., help="Amount of expected subscribers"),
 ):
     worker = Worker(
         subaddr=subaddr,
