@@ -28,13 +28,34 @@ def relay_file(file_path: Path, addr: str, shutdown_event: _EventClass):
     ctx = zmq.Context.instance()  # type: ignore
     req = ctx.socket(zmq.REQ)
     req.connect(addr)
+    req.SNDTIMEO = 1
+    req.RCVTIMEO = 1
+
     with open(file_path, newline="") as f:
         reader = csv.DictReader(f)
         for line in reader:
             if shutdown_event.is_set():
                 break
-            req.send(json.dumps(line).encode())
-            req.recv()
+
+            while True:
+                try:
+                    req.send(json.dumps(line).encode())
+                    break
+                except zmq.error.ZMQError as e:
+                    if e.errno == zmq.EAGAIN:
+                        pass
+                    else:
+                        raise
+            while True:
+                try:
+                    req.recv()
+                    break
+                except zmq.error.ZMQError as e:
+                    if e.errno == zmq.EAGAIN:
+                        pass
+                    else:
+                        raise
+
             sent += 1
 
             if (sent % 10_000) == 0:
@@ -140,16 +161,25 @@ def main(
 
         shutdown_event = mp.Event()
 
-        def _shutdown(*_args):
-            logger.error("Got SIGTERM")
+        def _shutdown():
             shutdown_event.set()
+            logger.error("Event set - Start to join")
+            logger.error("pposts %s", pposts)
+            pposts.terminate()
+            pcomments.terminate()
+            exit(1)
             coalesce(pposts.join)()
             coalesce(pcomments.join)()
             coalesce(p_mean_posts_score.join)()
             coalesce(p_memes_urls.join)()
             coalesce(p_top_meme.join)()
+            exit(1)
 
-        signal.signal(signal.SIGTERM, _shutdown)
+        def sigterm_handler(signum, frame):
+            logger.error("From frame %s", frame.f_locals.get("shutdown_event"))
+            _shutdown()
+
+        signal.signal(signal.SIGTERM, sigterm_handler)
 
         try:
             pposts = mp.Process(
