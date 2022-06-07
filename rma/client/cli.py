@@ -56,7 +56,12 @@ def relay_file(file_path: Path, addr: str, shutdown_event: _EventClass):
 
                 if (sent % 10_000) == 0:
                     logger.info("Sent %s rows from %s", sent, file_path)
-        req.send(POISON_PILL)
+            req.send(POISON_PILL)
+    except zmq.error.ZMQError as e:
+        if e.errno == zmq.EFSM:
+            pass
+        else:
+            raise
     except KeyboardInterrupt:
         req.SNDTIMEO = 1
         try:
@@ -164,7 +169,7 @@ def main(
     logger.info("Starting processes")
 
     manager = SyncManager()
-    manager.start(signal.signal, (signal.SIGINT, signal.SIG_IGN))
+    manager.start(signal.signal, (signal.SIGINT | signal.SIGTERM, signal.SIG_IGN))
 
     with manager:
         mean_posts_score = manager.Value(float, 0.0)
@@ -174,19 +179,32 @@ def main(
         shutdown_event = mp.Event()
 
         def _shutdown():
+            shutdown_event.set()
+
+            logger.error("Joining posts relay process")
             if coalesce(pposts.is_alive)():
                 pposts.join()
+
+            logger.error("Joining comments relay process")
             if coalesce(pcomments.is_alive)():
                 pposts.join()
+
+            logger.error("Joining process to get mean posts score")
             if coalesce(p_mean_posts_score.is_alive)():
                 p_mean_posts_score.join()
+
+            logger.error("Joining process to get memes urls")
             if coalesce(p_memes_urls.is_alive)():
                 p_memes_urls.join()
+
+            logger.error("Joining process to get top meme")
             if coalesce(p_top_meme.is_alive)():
                 p_top_meme.join()
 
         def sigterm_handler(_signum, _frame):
+            logger.error("Got SIGTERM")
             _shutdown()
+            exit(1)
 
         signal.signal(signal.SIGTERM, sigterm_handler)
 

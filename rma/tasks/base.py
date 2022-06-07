@@ -113,7 +113,12 @@ class VentilatorSource:
 
 class VentilatorWorker:
     def __init__(
-        self, pulladdr, reqaddr, pushaddr, executor_cls, executor_kwargs=None,
+        self,
+        pulladdr,
+        reqaddr,
+        pushaddr,
+        executor_cls,
+        executor_kwargs=None,
     ):
         self.context = zmq.Context.instance()
 
