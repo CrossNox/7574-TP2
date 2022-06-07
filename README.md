@@ -21,7 +21,7 @@ Un breve notebook en `notebooks/Reduce dataset.ipynb` nos permite generar un dat
 
 # Renderizar `docker-compose.yaml`
 ```bash
-poetry run rma render-dag docker/docker-compose.yaml informe/images/ 3
+poetry run rma render-dag docker informe/images/ 3
 ```
 
 Ver el significado de cada parámetro con:
