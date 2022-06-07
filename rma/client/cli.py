@@ -4,6 +4,7 @@ import signal
 from pathlib import Path
 import multiprocessing as mp
 from typing import Dict, List, Callable
+from multiprocessing.managers import SyncManager
 from multiprocessing.synchronize import Event as _EventClass
 
 import zmq
@@ -23,78 +24,93 @@ logger = get_logger(__name__)
 app = typer.Typer()
 
 
+def _wrap_loop(shutdown_event: _EventClass, op: Callable, *args):
+    while not shutdown_event.is_set():
+        try:
+            return op(*args)
+        except zmq.error.ZMQError as e:
+            if e.errno == zmq.EAGAIN:
+                pass
+            else:
+                raise
+
+
 def relay_file(file_path: Path, addr: str, shutdown_event: _EventClass):
     sent = 0
     ctx = zmq.Context.instance()  # type: ignore
     req = ctx.socket(zmq.REQ)
     req.connect(addr)
-    req.SNDTIMEO = 1
     req.RCVTIMEO = 1
+    req.SNDTIMEO = 1
 
-    with open(file_path, newline="") as f:
-        reader = csv.DictReader(f)
-        for line in reader:
-            if shutdown_event.is_set():
-                break
-
-            while True:
-                try:
-                    req.send(json.dumps(line).encode())
+    try:
+        with open(file_path, newline="") as f:
+            reader = csv.DictReader(f)
+            for line in reader:
+                if shutdown_event.is_set():
                     break
-                except zmq.error.ZMQError as e:
-                    if e.errno == zmq.EAGAIN:
-                        pass
-                    else:
-                        raise
-            while True:
-                try:
-                    req.recv()
-                    break
-                except zmq.error.ZMQError as e:
-                    if e.errno == zmq.EAGAIN:
-                        pass
-                    else:
-                        raise
+                _wrap_loop(shutdown_event, req.send, json.dumps(line).encode())
+                _wrap_loop(shutdown_event, req.recv)
 
-            sent += 1
+                sent += 1
 
-            if (sent % 10_000) == 0:
-                logger.info("Sent %s rows from %s", sent, file_path)
-
-    req.send(POISON_PILL)
+                if (sent % 10_000) == 0:
+                    logger.info("Sent %s rows from %s", sent, file_path)
+        req.send(POISON_PILL)
+    except KeyboardInterrupt:
+        req.SNDTIMEO = 1
+        try:
+            req.send(POISON_PILL)
+            req.recv()
+        except zmq.error.ZMQError as e:
+            if e.errno == zmq.EAGAIN or e.errno == zmq.EFSM:
+                pass
+            else:
+                raise
+        req.close()
 
 
 def get_zmqsink_memes_url(manager_list, addr, shutdown_event: _EventClass):
     ctx = zmq.Context.instance()  # type: ignore
     req = ctx.socket(zmq.REQ)
     req.connect(addr)
+    req.RCVTIMEO = 1
+    req.SNDTIMEO = 1
 
-    while not shutdown_event.is_set():
-        req.send(POISON_PILL)
-        s = req.recv()
+    try:
+        while not shutdown_event.is_set():
+            _wrap_loop(shutdown_event, req.send, POISON_PILL)
+            s = _wrap_loop(shutdown_event, req.recv)
 
-        if s == POISON_PILL:
-            break
+            if s == POISON_PILL:
+                break
 
-        manager_list.append(json.loads(s.decode()))
+            manager_list.append(json.loads(s.decode()))
+    except KeyboardInterrupt:
+        req.close()
 
 
 def get_zmq_mean_posts_score(manager_value, addr, shutdown_event: _EventClass):
     ctx = zmq.Context.instance()  # type: ignore
     req = ctx.socket(zmq.REQ)
     req.connect(addr)
+    req.RCVTIMEO = 1
+    req.SNDTIMEO = 1
 
     logger.info("Requesting mean posts score")
-    while not shutdown_event.is_set():
-        req.send(POISON_PILL)
-        s = req.recv()
+    try:
+        while not shutdown_event.is_set():
+            _wrap_loop(shutdown_event, req.send, POISON_PILL)
+            s = _wrap_loop(shutdown_event, req.recv)
 
-        if s == POISON_PILL:
-            break
+            if s == POISON_PILL:
+                break
 
-        else:
-            logger.info("Mean posts got %s", s.decode())
-            manager_value.value = float(s)
+            else:
+                logger.info("Mean posts got %s", s.decode())
+                manager_value.value = float(s)
+    except KeyboardInterrupt:
+        req.close()
 
 
 def get_zmq_top_post(manager_value, addr, shutdown_event: _EventClass):
@@ -107,21 +123,14 @@ def get_zmq_top_post(manager_value, addr, shutdown_event: _EventClass):
     # TODO: catch error here
     logger.info("Requesting top meme")
 
-    def _wrap_loop(op: Callable, *args):
-        while not shutdown_event.is_set():
-            try:
-                return op(*args)
-            except zmq.error.ZMQError as e:
-                if e.errno == zmq.EAGAIN:
-                    pass
-                else:
-                    raise
-
-    _wrap_loop(req.send, POISON_PILL)
-    manager_value.value = _wrap_loop(req.recv)
-    logger.info("Sending ACK")
-    _wrap_loop(req.send, POISON_PILL)
-    _wrap_loop(req.recv)
+    try:
+        _wrap_loop(shutdown_event, req.send, POISON_PILL)
+        manager_value.value = _wrap_loop(shutdown_event, req.recv)
+        logger.info("Sending ACK")
+        _wrap_loop(shutdown_event, req.send, POISON_PILL)
+        _wrap_loop(shutdown_event, req.recv)
+    except KeyboardInterrupt:
+        req.close()
 
 
 @app.command()
@@ -154,7 +163,10 @@ def main(
     config_logging(verbose, pretty)
     logger.info("Starting processes")
 
-    with mp.Manager() as manager:
+    manager = SyncManager()
+    manager.start(signal.signal, (signal.SIGINT, signal.SIG_IGN))
+
+    with manager:
         mean_posts_score = manager.Value(float, 0.0)
         memes_urls: List[Dict[str, str]] = manager.list()
         top_meme = manager.Value(bytes, POISON_PILL)
@@ -162,21 +174,18 @@ def main(
         shutdown_event = mp.Event()
 
         def _shutdown():
-            shutdown_event.set()
-            logger.error("Event set - Start to join")
-            logger.error("pposts %s", pposts)
-            pposts.terminate()
-            pcomments.terminate()
-            exit(1)
-            coalesce(pposts.join)()
-            coalesce(pcomments.join)()
-            coalesce(p_mean_posts_score.join)()
-            coalesce(p_memes_urls.join)()
-            coalesce(p_top_meme.join)()
-            exit(1)
+            if coalesce(pposts.is_alive)():
+                pposts.join()
+            if coalesce(pcomments.is_alive)():
+                pposts.join()
+            if coalesce(p_mean_posts_score.is_alive)():
+                p_mean_posts_score.join()
+            if coalesce(p_memes_urls.is_alive)():
+                p_memes_urls.join()
+            if coalesce(p_top_meme.is_alive)():
+                p_top_meme.join()
 
-        def sigterm_handler(signum, frame):
-            logger.error("From frame %s", frame.f_locals.get("shutdown_event"))
+        def sigterm_handler(_signum, _frame):
             _shutdown()
 
         signal.signal(signal.SIGTERM, sigterm_handler)
