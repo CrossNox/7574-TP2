@@ -1,6 +1,7 @@
 """Utils file."""
 
 import logging
+import pathlib
 from typing import Callable
 
 import typer
@@ -64,6 +65,12 @@ def get_logger(name: str):
 
 
 utils_logger = get_logger(__name__)
+
+
+def path_or_none(s):
+    if s == "":
+        return None
+    return pathlib.Path(s)
 
 
 def coalesce(f: Callable) -> Callable:

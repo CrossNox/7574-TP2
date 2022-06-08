@@ -8,5 +8,5 @@ COPY README.md /app/README.md
 COPY rma /app/rma
 WORKDIR /app
 RUN poetry install --no-dev --no-root
-RUN poetry install --no-dev
+RUN poetry install
 ENTRYPOINT ["poetry", "run", "rma", "-vv"]

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rma"
-version = "2.3.3"
+version = "2.4.0"
 description = "Reddit Memes Analyzer, for fun (and passing Distribuidos I)."
 authors = ["CrossNox <ijmermet@gmail.com>"]
 
@@ -33,6 +33,7 @@ pandas = "^1.4.2"
 [tool.poetry.scripts]
 rma_client = "rma.client.cli:app"
 rma = "rma.cli.cli:app"
+rma_dataset = "rma.dataset.cli:app"
 
 [tool.black]
 line-length = 88

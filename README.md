@@ -14,10 +14,9 @@ poetry install --no-dev
 ```
 
 # Descarga del set de datos
-El notebook `notebooks/Explore dataset.ipynb` descarga el dataset utilizando la API de Kaggle. Para ello, se requiere tener en `~/.kaggle` un archivo `kaggle.json` de credenciales. Para descargarlo, se deben seguir los pasos bajo la sección `Authentication` de [esta guía](https://www.kaggle.com/docs/api).
+El comando `rma_dataset` sirve para descargar la data. Se requiere tener un `json` de autenticación de la API de Kaggle. Para descargarlo, se deben seguir los pasos bajo la sección `Authentication` de [esta guía](https://www.kaggle.com/docs/api). También genera los datasets reducidos.
 
-## Dataset reducido
-Un breve notebook en `notebooks/Reduce dataset.ipynb` nos permite generar un dataset reducido en tamaño.
+Su ejecución se puede simplificar con `make download-dataset`. Se espera tener el json de autenticación en la ubicación estándar (`~/.kaggle`).
 
 # Renderizar `docker-compose.yaml`
 ```bash
