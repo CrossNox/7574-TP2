@@ -16,7 +16,7 @@ poetry install --no-dev
 # Descarga del set de datos
 El comando `rma_dataset` sirve para descargar la data. Se requiere tener un `json` de autenticación de la API de Kaggle. Para descargarlo, se deben seguir los pasos bajo la sección `Authentication` de [esta guía](https://www.kaggle.com/docs/api). También genera los datasets reducidos.
 
-Su ejecución se puede simplificar con `make download-dataset`. Se espera tener el json de autenticación en la ubicación estándar (`~/.kaggle`).
+Su ejecución se puede simplificar con `make download-dataset`. Se espera tener el json de autenticación en la ubicación estándar (`~/.kaggle`). Se puede cambiar el tamaño del dataset reducido con `make download-dataset SAMPLE_SIZE=<f>`, reemplazando `<f>` por un valor en el rango `(0, 1)`.
 
 # Renderizar `docker-compose.yaml`
 ```bash

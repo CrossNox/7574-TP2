@@ -6,6 +6,7 @@ DOCKER_BIN=docker
 DOCKER_COMPOSE_BIN=docker-compose
 
 NWORKERS := 3
+SAMPLE_SIZE := 0.01
 
 default: docker-image
 
@@ -14,7 +15,7 @@ docker-image:
 .PHONY: docker-image
 
 download-data:
-	$(DOCKER_BIN) run -v $(CURDIR)/notebooks/data:/data -v $(HOME)/.kaggle:/.kaggle -e KAGGLE_JSON_LOC=/.kaggle -e DATA_OUTPUTDIR=/data --entrypoint poetry 7574-tp2:latest run rma_dataset -vv
+	$(DOCKER_BIN) run -v $(CURDIR)/notebooks/data:/data -v $(HOME)/.kaggle:/.kaggle -e KAGGLE_JSON_LOC=/.kaggle -e DATA_OUTPUTDIR=/data --entrypoint poetry 7574-tp2:latest run rma_dataset -vv --sample-size $(SAMPLE_SIZE)
 
 client:
 	rm -f outputs/top_meme.img

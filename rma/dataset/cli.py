@@ -47,7 +47,7 @@ def main(
         cfg.data.outputdir(default=DATA_FOLDER, cast=path_or_none),
         help="Path where to save data to",
     ),
-    sample_size: float = typer.Argument(
+    sample_size: float = typer.Option(
         0.01, help="Sample size for reduced datasets", min=0.001, max=1.0
     ),
     verbose: int = typer.Option(
