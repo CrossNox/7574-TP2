@@ -1,11 +1,14 @@
 import abc
 import json
 import heapq
+import pathlib
+from typing import Union
 
 import zmq
 import requests
 
 from rma.utils import get_logger
+from rma.constants import POISON_PILL
 
 logger = get_logger(__name__)
 
@@ -36,7 +39,7 @@ class Sink(abc.ABC):
 
     def run(self):
         logger.debug("Sink :: syncing with source")
-        self.syncclient.send(b"")
+        self.syncclient.send(POISON_PILL)
         self.syncclient.recv()
 
         logger.debug("Sink :: running loop")
@@ -44,7 +47,7 @@ class Sink(abc.ABC):
             s = self.receiver.recv()
             # logger.debug("Sink :: Got message")
 
-            if s == b"":
+            if s == POISON_PILL:
                 logger.debug("Sink :: got poison pill")
                 break
 
@@ -57,7 +60,7 @@ class Sink(abc.ABC):
 
         self.final_stmt()
 
-        self.syncclient.send(b"")
+        self.syncclient.send(POISON_PILL)
         self.syncclient.recv()
 
 
@@ -76,7 +79,7 @@ class ZMQSink(Sink):
 
     def final_stmt(self):
         self.rep.recv()
-        self.rep.send(b"")
+        self.rep.send(POISON_PILL)
         return
 
 
@@ -86,9 +89,9 @@ class PrintSink(Sink):
 
 
 class FileSink(Sink):
-    def __init__(self, path, *args, **kwargs):
+    def __init__(self, path: Union[pathlib.Path, str], *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.path = path
+        self.path = pathlib.Path(path)
         self.messages = 0
         if self.path.exists():
             self.path.unlink()
@@ -187,7 +190,7 @@ class TopPostZMQ(Sink):
                 pass
             except IndexError:
                 self.rep.recv()
-                self.rep.send(b"")
+                self.rep.send(POISON_PILL)
                 return
 
         logger.info("Sending meme")
@@ -195,4 +198,4 @@ class TopPostZMQ(Sink):
         self.rep.send(content)
 
         self.rep.recv()
-        self.rep.send(b"")
+        self.rep.send(POISON_PILL)

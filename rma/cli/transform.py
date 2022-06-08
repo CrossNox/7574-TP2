@@ -3,6 +3,7 @@ from typing import List
 import typer
 
 from rma.utils import get_logger
+from rma.exceptions import SigtermError
 from rma.tasks.base import Worker, VentilatorWorker
 from rma.tasks.transforms import (
     FilterColumn,
@@ -30,15 +31,20 @@ def posts_score_mean(
     ),
     nsubs: int = typer.Argument(..., help="Amount of expected subscribers"),
 ):
-    worker = Worker(
-        subaddr=subaddr,
-        reqaddr=reqaddr,
-        pubaddr=pubaddr,
-        subsyncaddr=repaddr,
-        nsubs=nsubs,
-        executor_cls=PostsScoreMean,
-    )
-    worker.run()
+    try:
+        worker = Worker(
+            subaddr=subaddr,
+            reqaddr=reqaddr,
+            pubaddr=pubaddr,
+            subsyncaddr=repaddr,
+            nsubs=nsubs,
+            executor_cls=PostsScoreMean,
+        )
+        worker.run()
+    except SigtermError:
+        typer.Abort(1)
+    except KeyboardInterrupt:
+        typer.Abort(2)
 
 
 @app.command()
@@ -55,15 +61,20 @@ def mean_sentiment(
     ),
     nsubs: int = typer.Argument(..., help="Amount of expected subscribers"),
 ):
-    worker = Worker(
-        subaddr=subaddr,
-        reqaddr=reqaddr,
-        pubaddr=pubaddr,
-        subsyncaddr=repaddr,
-        nsubs=nsubs,
-        executor_cls=MeanSentiment,
-    )
-    worker.run()
+    try:
+        worker = Worker(
+            subaddr=subaddr,
+            reqaddr=reqaddr,
+            pubaddr=pubaddr,
+            subsyncaddr=repaddr,
+            nsubs=nsubs,
+            executor_cls=MeanSentiment,
+        )
+        worker.run()
+    except SigtermError:
+        typer.Abort(1)
+    except KeyboardInterrupt:
+        typer.Abort(2)
 
 
 @app.command()
@@ -73,14 +84,19 @@ def filter_columns(
     pushaddr: str = typer.Argument(..., help="The address to push data to"),
     columns: List[str] = typer.Argument(..., help="Columns to keep"),
 ):
-    worker = VentilatorWorker(
-        pulladdr=pulladdr,
-        reqaddr=reqaddr,
-        pushaddr=pushaddr,
-        executor_cls=FilterColumn,
-        executor_kwargs={"columns": columns},
-    )
-    worker.run()
+    try:
+        worker = VentilatorWorker(
+            pulladdr=pulladdr,
+            reqaddr=reqaddr,
+            pushaddr=pushaddr,
+            executor_cls=FilterColumn,
+            executor_kwargs={"columns": columns},
+        )
+        worker.run()
+    except SigtermError:
+        typer.Abort(1)
+    except KeyboardInterrupt:
+        typer.Abort(2)
 
 
 @app.command()
@@ -89,10 +105,15 @@ def extract_post_id(
     reqaddr: str = typer.Argument(..., help="The address to ack the ventilator"),
     pushaddr: str = typer.Argument(..., help="The address to push data to"),
 ):
-    worker = VentilatorWorker(
-        pulladdr=pulladdr,
-        reqaddr=reqaddr,
-        pushaddr=pushaddr,
-        executor_cls=ExtractPostID,
-    )
-    worker.run()
+    try:
+        worker = VentilatorWorker(
+            pulladdr=pulladdr,
+            reqaddr=reqaddr,
+            pushaddr=pushaddr,
+            executor_cls=ExtractPostID,
+        )
+        worker.run()
+    except SigtermError:
+        typer.Abort(1)
+    except KeyboardInterrupt:
+        typer.Abort(2)

@@ -1,6 +1,7 @@
 import typer
 
 from rma.utils import get_logger
+from rma.exceptions import SigtermError
 from rma.tasks.base import Worker, VentilatorWorker
 from rma.tasks.filters import (
     FilterNullUrl,
@@ -29,15 +30,20 @@ def uniq_posts(
 ):
     # TODO: this is a limitation design
     # A ventilator worker should be able to declare dependencies
-    worker = Worker(
-        subaddr=subaddr,
-        reqaddr=reqaddr,
-        pubaddr=pubaddr,
-        subsyncaddr=repaddr,
-        nsubs=nsubs,
-        executor_cls=FilterUniqPosts,
-    )
-    worker.run()
+    try:
+        worker = Worker(
+            subaddr=subaddr,
+            reqaddr=reqaddr,
+            pubaddr=pubaddr,
+            subsyncaddr=repaddr,
+            nsubs=nsubs,
+            executor_cls=FilterUniqPosts,
+        )
+        worker.run()
+    except SigtermError:
+        typer.Abort(1)
+    except KeyboardInterrupt:
+        typer.Abort(2)
 
 
 @app.command()
@@ -60,16 +66,21 @@ def posts_score_above_mean(
 ):
     # TODO: this is a limitation design
     # A ventilator worker should be able to declare dependencies
-    worker = Worker(
-        subaddr=subaddr,
-        reqaddr=reqaddr,
-        pubaddr=pubaddr,
-        subsyncaddr=repaddr,
-        nsubs=nsubs,
-        executor_cls=FilterPostsScoreAboveMean,
-        deps=[("mean", meansyncaddr, meansubaddr)],
-    )
-    worker.run()
+    try:
+        worker = Worker(
+            subaddr=subaddr,
+            reqaddr=reqaddr,
+            pubaddr=pubaddr,
+            subsyncaddr=repaddr,
+            nsubs=nsubs,
+            executor_cls=FilterPostsScoreAboveMean,
+            deps=[("mean", meansyncaddr, meansubaddr)],
+        )
+        worker.run()
+    except SigtermError:
+        typer.Abort(1)
+    except KeyboardInterrupt:
+        typer.Abort(2)
 
 
 @app.command()
@@ -78,13 +89,18 @@ def ed_comments(
     reqaddr: str = typer.Argument(..., help="The address to ack the ventilator"),
     pushaddr: str = typer.Argument(..., help="The address to push data to"),
 ):
-    worker = VentilatorWorker(
-        pulladdr=pulladdr,
-        reqaddr=reqaddr,
-        pushaddr=pushaddr,
-        executor_cls=FilterEdComment,
-    )
-    worker.run()
+    try:
+        worker = VentilatorWorker(
+            pulladdr=pulladdr,
+            reqaddr=reqaddr,
+            pushaddr=pushaddr,
+            executor_cls=FilterEdComment,
+        )
+        worker.run()
+    except SigtermError:
+        typer.Abort(1)
+    except KeyboardInterrupt:
+        typer.Abort(2)
 
 
 @app.command()
@@ -93,13 +109,18 @@ def nan_sentiment(
     reqaddr: str = typer.Argument(..., help="The address to ack the ventilator"),
     pushaddr: str = typer.Argument(..., help="The address to push data to"),
 ):
-    worker = VentilatorWorker(
-        pulladdr=pulladdr,
-        reqaddr=reqaddr,
-        pushaddr=pushaddr,
-        executor_cls=FilterNanSentiment,
-    )
-    worker.run()
+    try:
+        worker = VentilatorWorker(
+            pulladdr=pulladdr,
+            reqaddr=reqaddr,
+            pushaddr=pushaddr,
+            executor_cls=FilterNanSentiment,
+        )
+        worker.run()
+    except SigtermError:
+        typer.Abort(1)
+    except KeyboardInterrupt:
+        typer.Abort(2)
 
 
 @app.command()
@@ -108,10 +129,15 @@ def null_url(
     reqaddr: str = typer.Argument(..., help="The address to ack the ventilator"),
     pushaddr: str = typer.Argument(..., help="The address to push data to"),
 ):
-    worker = VentilatorWorker(
-        pulladdr=pulladdr,
-        reqaddr=reqaddr,
-        pushaddr=pushaddr,
-        executor_cls=FilterNullUrl,
-    )
-    worker.run()
+    try:
+        worker = VentilatorWorker(
+            pulladdr=pulladdr,
+            reqaddr=reqaddr,
+            pushaddr=pushaddr,
+            executor_cls=FilterNullUrl,
+        )
+        worker.run()
+    except SigtermError:
+        typer.Abort(1)
+    except KeyboardInterrupt:
+        typer.Abort(2)
