@@ -94,7 +94,7 @@ class VentilatorSource(RunningBlock):
         self.subsync.close()
         self.push.close()
         self.sync_rep.close()
-        self.sink_req.clse()
+        self.sink_req.close()
 
     def _run(self):
         # First, we need to know that all workers are running and listening
