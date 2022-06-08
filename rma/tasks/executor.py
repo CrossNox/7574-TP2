@@ -9,13 +9,9 @@ logger = get_logger(__name__)
 
 class Executor(abc.ABC):
     def __init__(self, task_in, task_out):
-        self._signaled_termination = False
         self.task_in = task_in
         self.task_out = task_out
         self.nprocessed = 0
-
-    def stop(self):
-        self._signaled_termination = True
 
     @abc.abstractmethod
     def final_stmt(self):
@@ -26,7 +22,7 @@ class Executor(abc.ABC):
         pass
 
     def run(self):
-        while not self._signaled_termination:
+        while True:
             s = self.task_in.recv()
 
             if s == POISON_PILL:
