@@ -7,6 +7,7 @@ import zmq
 
 from rma.utils import get_logger
 from rma.constants import POISON_PILL
+from rma.exceptions import SigtermError
 from rma.tasks.executor import Executor
 
 logger = get_logger(__name__)
@@ -18,15 +19,25 @@ class RunningBlock(abc.ABC):
         signal.signal(signal.SIGTERM, self._handle_sigterm)
 
     def run(self):
-        self._run()
+        try:
+            self._run()
+        except KeyboardInterrupt:
+            self._signaled_termination = True
+            self._cleanup()
+            raise
 
     @abc.abstractmethod
     def _run(self):
         pass
 
     @abc.abstractmethod
-    def _handle_sigterm(self):
+    def _cleanup(self):
         pass
+
+    def _handle_sigterm(self, _signum, _frame):
+        self._signaled_termination = True
+        self._cleanup()
+        raise SigtermError()
 
 
 class VentilatorSource(RunningBlock):
@@ -75,7 +86,7 @@ class VentilatorSource(RunningBlock):
         logger.debug("Ventilate sync addr %s", syncaddr)
         logger.debug("Ventilate looking for sink %s", sinkaddr)
 
-    def _handle_sigterm(self):
+    def _cleanup(self):
         # TODO: send poison pills
         self.sub.close()
         self.subsync.close()
@@ -176,7 +187,7 @@ class VentilatorWorker(RunningBlock):
         logger.debug("Worker synced to %s", reqaddr)
         logger.debug("Worker pushing to %s", pushaddr)
 
-    def _handle_sigterm(self):
+    def _cleanup(self):
         self.task_pull.close()
         self.source_req.close()
         self.push.close()
@@ -232,7 +243,7 @@ class VentilatorSink(RunningBlock):
         logger.debug("Ventilate sink :: publishing at %s", pubaddr)
         logger.debug("Ventilate sink :: syncing %s at address %s", nsubs, subsyncaddr)
 
-    def _handle_sigterm(self):
+    def _cleanup(self):
         self.workers_results.close()
         self.source_rep.close()
         self.pub.close()
@@ -335,7 +346,7 @@ class Worker(RunningBlock):
         logger.debug("Worker :: publishing at %s", pubaddr)
         logger.debug("Worker :: sync with %s clients at address %s", nsubs, subsyncaddr)
 
-    def _handle_sigterm(self):
+    def _cleanup(self):
         self.sub.close()
         self.req.close()
         self.pub.close()
@@ -468,7 +479,7 @@ class Joiner(RunningBlock):
             **executor_kwargs,
         )
 
-    def _handle_sigterm(self):
+    def _cleanup(self):
         self.pub.close()
         self.syncsubs.close()
         self.sub.close()

@@ -1,6 +1,7 @@
 import typer
 
 from rma.utils import get_logger
+from rma.exceptions import SigtermError
 from rma.tasks.base import VentilatorSink, VentilatorSource
 
 logger = get_logger(__name__)
@@ -23,10 +24,15 @@ def source(
         ..., help="How many workers will the source be splitting tasks with"
     ),
 ):
-    worker = VentilatorSource(
-        subaddr, subsyncaddr, pushaddr, syncaddr, sinkaddr, nworkers
-    )
-    worker.run()
+    try:
+        worker = VentilatorSource(
+            subaddr, subsyncaddr, pushaddr, syncaddr, sinkaddr, nworkers
+        )
+        worker.run()
+    except SigtermError:
+        typer.Abort(1)
+    except KeyboardInterrupt:
+        typer.Abort(2)
 
 
 @app.command()
@@ -42,5 +48,12 @@ def sink(
     ),
     nsubs: int = typer.Argument(..., help="Amount of expected subscribers"),
 ):
-    worker = VentilatorSink(pulladdr, repaddr, pubaddr, nworkers, nsubs, subsyncaddr)
-    worker.run()
+    try:
+        worker = VentilatorSink(
+            pulladdr, repaddr, pubaddr, nworkers, nsubs, subsyncaddr
+        )
+        worker.run()
+    except SigtermError:
+        typer.Abort(1)
+    except KeyboardInterrupt:
+        typer.Abort(2)
