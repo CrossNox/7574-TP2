@@ -19,7 +19,7 @@ client:
 .PHONY: client
 
 dag:
-	poetry run rma render-dag docker informe/images/ $(NWORKERS)
+	$(DOCKER_BIN) run -v $(CURDIR)/docker:/app/docker -v $(CURDIR)/informe/images:/app/images --entrypoint poetry 7574-tp2:latest run rma render-dag /app/docker /app/images/ $(NWORKERS)
 
 pyreverse:
 	poetry run pyreverse rma --output=png --output-directory=informe/images/ --colorized --ignore=cli,client
