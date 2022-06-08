@@ -12,6 +12,8 @@ from rma.tasks.executor import Executor
 
 logger = get_logger(__name__)
 
+E = TypeVar("E", bound=Executor)
+
 
 class RunningBlock(abc.ABC):
     def __init__(self):
@@ -158,11 +160,11 @@ class VentilatorWorker(RunningBlock):
         pulladdr,
         reqaddr,
         pushaddr,
-        executor_cls,
+        executor_cls: Type[E],
         executor_kwargs=None,
     ):
         super().__init__()
-        self.context = zmq.Context.instance()
+        self.context = zmq.sugar.context.Context.instance()
 
         # PULL address to get message from
         self.task_pull = self.context.socket(zmq.PULL)
@@ -191,7 +193,6 @@ class VentilatorWorker(RunningBlock):
         self.task_pull.close()
         self.source_req.close()
         self.push.close()
-        self.executor.stop()
 
     def _run(self):
         logger.info("Sync with ventilator source")
@@ -294,9 +295,6 @@ class VentilatorSink(RunningBlock):
         logger.debug("VentilatorSink :: Exiting")
 
 
-E = TypeVar("E", bound=Executor)
-
-
 class Worker(RunningBlock):
     def __init__(
         self,
@@ -351,8 +349,6 @@ class Worker(RunningBlock):
         self.req.close()
         self.pub.close()
         self.syncsubs.close()
-        if self.executor is not None:
-            self.executor.stop()
 
     def _run(self):
         logger.debug("Worker :: Syncing with all subs")
@@ -484,7 +480,6 @@ class Joiner(RunningBlock):
         self.syncsubs.close()
         self.sub.close()
         self.req_sckt.close()
-        self.executor.stop()
 
     def _run(self):
         logger.debug("Joiner :: Syncing with all subs")
