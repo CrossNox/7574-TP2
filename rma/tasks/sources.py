@@ -5,6 +5,7 @@ import json
 import zmq
 
 from rma.utils import get_logger
+from rma.constants import POISON_PILL
 
 logger = get_logger(__name__)
 
@@ -36,7 +37,7 @@ class Source(abc.ABC):
         subs = 0
         while subs < self.nsubs:
             _ = self.syncservice.recv()
-            self.syncservice.send(b"")
+            self.syncservice.send(POISON_PILL)
             subs += 1
             logger.debug(f"Source :: +1 subscriber ({subs}/{self.nsubs})")
 
@@ -49,12 +50,12 @@ class Source(abc.ABC):
         pill_acks = 0
         self.syncservice.rcvtimeo = 1000
         while pill_acks < self.nsubs:
-            self.sender.send(b"")
+            self.sender.send(POISON_PILL)
             try:
                 self.syncservice.recv()
-                self.syncservice.send(b"")
+                self.syncservice.send(POISON_PILL)
                 pill_acks += 1
-            except zmq.ZMQError as e:
+            except zmq.error.ZMQError as e:
                 if e.errno == zmq.EAGAIN:
                     pass
                 else:
@@ -77,9 +78,9 @@ class ZMQRelaySource(Source):
     def gen(self):
         while True:
             s = self.rep.recv()
-            if s == b"":
+            if s == POISON_PILL:
                 return
-            self.rep.send(b"")
+            self.rep.send(POISON_PILL)
             # TODO: avoid decode/encode
             yield json.loads(s.decode())
 

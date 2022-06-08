@@ -2,6 +2,7 @@ import abc
 import json
 
 from rma.utils import get_logger
+from rma.constants import POISON_PILL
 
 logger = get_logger(__name__)
 
@@ -24,7 +25,7 @@ class Executor(abc.ABC):
         while True:
             s = self.task_in.recv()
 
-            if s == b"":
+            if s == POISON_PILL:
                 break
 
             msg = json.loads(s.decode())

@@ -2,6 +2,7 @@ import json
 from typing import Dict
 
 from rma.utils import get_logger
+from rma.constants import POISON_PILL
 from rma.tasks.executor import Executor
 
 logger = get_logger(__name__)
@@ -45,7 +46,7 @@ class KeyJoin(Executor):
         while pills < self.inputs:
             s = self.task_in.recv()
 
-            if s == b"":
+            if s == POISON_PILL:
                 logger.debug("KeyJoin :: Got a poison pill")
                 # Now a good question, for when I have had more sleep
                 # Do we need n pills? Or does the first one warrant we can do no more joins?
@@ -53,7 +54,7 @@ class KeyJoin(Executor):
                 # TODO: look this and comment the conclusion
                 # Intuition: we __might__ get all A, PP(A), then B, PP(B)
                 logger.debug("ACKing poison pill")
-                self.req_sckt.send(b"")
+                self.req_sckt.send(POISON_PILL)
                 self.req_sckt.recv()
                 pills += 1
                 logger.debug("Poison pill %s/%s ACKd", pills, self.inputs)
