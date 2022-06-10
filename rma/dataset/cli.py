@@ -74,6 +74,7 @@ def main(
         from kaggle import KaggleApi
 
         api = KaggleApi()
+        api.authenticate()
 
         if (
             not pathlib.Path(outputdir / COMMENTS_FILENAME).exists()
