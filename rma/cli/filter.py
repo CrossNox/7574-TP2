@@ -1,8 +1,8 @@
 import typer
 
 from rma.utils import get_logger
-from rma.exceptions import SigtermError
 from rma.tasks.base import Worker, VentilatorWorker
+from rma.exceptions import SigtermError, UnsolvedDependency
 from rma.tasks.filters import (
     FilterNullUrl,
     FilterEdComment,
@@ -81,6 +81,8 @@ def posts_score_above_mean(
         typer.Abort(1)
     except KeyboardInterrupt:
         typer.Abort(2)
+    except UnsolvedDependency:
+        typer.Abort(3)
 
 
 @app.command()

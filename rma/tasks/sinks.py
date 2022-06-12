@@ -58,8 +58,10 @@ class Sink(abc.ABC):
             if (self.nprocessed % 10_000) == 0:
                 logger.debug("Sunk %s messages", self.nprocessed)
 
+        logger.info("Sink :: Executing final statement")
         self.final_stmt()
 
+        logger.info("Sink :: Sync with client")
         self.syncclient.send(POISON_PILL)
         self.syncclient.recv()
 

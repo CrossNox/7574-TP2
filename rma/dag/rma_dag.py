@@ -28,7 +28,10 @@ def build_rma_dag(nworkers: int = 3):
 
     # ===================================================================== Posts middle path
     filter_posts_cols_middle = VentilatorBlock(
-        "filter_posts_cols_middle", "transform filter-columns", ["id", "score"]
+        "filter_posts_cols_middle",
+        "transform filter-columns",
+        ["id", "score"],
+        nworkers=nworkers,
     )
     posts_score_mean = Worker("posts_score_mean", "transform posts-score-mean")
 

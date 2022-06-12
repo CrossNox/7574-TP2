@@ -43,7 +43,7 @@ class KeyJoin(Executor):
 
     def run(self):
         pills = 0
-        while pills < self.inputs:
+        while pills < self.inputs and not self.signaled_termination:
             s = self.task_in.recv()
 
             if s == POISON_PILL:

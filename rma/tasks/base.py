@@ -7,8 +7,8 @@ import zmq
 
 from rma.utils import get_logger
 from rma.constants import POISON_PILL
-from rma.exceptions import SigtermError
 from rma.tasks.executor import Executor
+from rma.exceptions import SigtermError, UnsolvedDependency
 
 logger = get_logger(__name__)
 
@@ -23,8 +23,14 @@ class RunningBlock(abc.ABC):
     def run(self):
         try:
             self._run()
+            self._notify_exit()
+            self._cleanup()
         except KeyboardInterrupt:
             self._signaled_termination = True
+            self._cleanup()
+            raise
+        except UnsolvedDependency:
+            self._notify_exit()
             self._cleanup()
             raise
 
@@ -36,8 +42,13 @@ class RunningBlock(abc.ABC):
     def _cleanup(self):
         pass
 
+    @abc.abstractmethod
+    def _notify_exit(self):
+        pass
+
     def _handle_sigterm(self, _signum, _frame):
         self._signaled_termination = True
+        self._notify_exit()
         self._cleanup()
         raise SigtermError()
 
@@ -128,6 +139,7 @@ class VentilatorSource(RunningBlock):
 
             self.push.send(s)
 
+    def _notify_exit(self):
         logger.debug("ACKing poison pill")
         self.subsync.send(POISON_PILL)
         self.subsync.recv()
@@ -182,7 +194,10 @@ class VentilatorWorker(RunningBlock):
         if executor_kwargs is None:
             executor_kwargs = dict()
         self.executor = executor_cls(
-            task_in=self.task_pull, task_out=self.push, **executor_kwargs
+            task_in=self.task_pull,
+            task_out=self.push,
+            signaled_termination=self._signaled_termination,
+            **executor_kwargs,
         )
 
         logger.debug("Worker pulling from %s", pulladdr)
@@ -201,6 +216,7 @@ class VentilatorWorker(RunningBlock):
 
         self.executor.run()
 
+    def _notify_exit(self):
         logger.info("Acking poison pill to ventilator source")
         self.source_req.send(POISON_PILL)
         self.source_req.recv()
@@ -264,7 +280,7 @@ class VentilatorSink(RunningBlock):
         self.source_rep.send(POISON_PILL)
 
         alive_workers = self.nworkers
-        while alive_workers > 0:
+        while alive_workers > 0 and not self._signaled_termination:
             s = self.workers_results.recv()
 
             if s == POISON_PILL:
@@ -272,6 +288,7 @@ class VentilatorSink(RunningBlock):
             else:
                 self.pub.send(s)
 
+    def _notify_exit(self):
         logger.debug("ACKing poison pill with source")
         self.source_rep.recv()
         self.source_rep.send(POISON_PILL)
@@ -384,13 +401,18 @@ class Worker(RunningBlock):
             _dep_sync.send(POISON_PILL)
             _dep_sync.recv()
 
-            final_deps[dep_name] = json.loads(_sub.recv().decode())
-
-            while _sub.recv() != POISON_PILL:
-                pass
+            while True:
+                dep_result = _sub.recv()
+                if dep_result == POISON_PILL:
+                    break
+                final_deps[dep_name] = json.loads(dep_result.decode())
 
             _dep_sync.send(POISON_PILL)
             _dep_sync.recv()
+
+            if final_deps.get(dep_name) is None:
+                logger.error("Could not resolve dependency")
+                raise UnsolvedDependency()
 
         # for dep_name, sub in _deps_subs.items():
         #    final_deps[dep_name] = json.loads(sub.recv().decode())
@@ -398,11 +420,16 @@ class Worker(RunningBlock):
         logger.debug("Worker :: Running executor")
         # Thingy to execute
         self.executor = self.executor_cls(
-            **final_deps, task_in=self.sub, task_out=self.pub, **self.executor_kwargs
+            **final_deps,
+            task_in=self.sub,
+            task_out=self.pub,
+            signaled_termination=self._signaled_termination,
+            **self.executor_kwargs,
         )
 
         self.executor.run()
 
+    def _notify_exit(self):
         logger.debug("ACKing poison pill")
         self.req.send(POISON_PILL)
         self.req.recv()
@@ -472,6 +499,7 @@ class Joiner(RunningBlock):
             task_in=self.sub,
             task_out=self.pub,
             req_sckt=self.req_sckt,
+            signaled_termination=self._signaled_termination,
             **executor_kwargs,
         )
 
@@ -499,6 +527,7 @@ class Joiner(RunningBlock):
         logger.debug("Joiner :: Running executor")
         self.executor.run()
 
+    def _notify_exit(self):
         logger.debug("Joiner :: Sending poison pill")
 
         pill_acks = 0
